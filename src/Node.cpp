@@ -1,6 +1,6 @@
 #include "Node.h"
 
-Node::Node(int id,std::set<int>depends_on,std::set<int>dependents,void (*func)()){
+Node::Node(int id,std::vector<int>depends_on,std::vector<int>dependents,void (*func)()){
 	this->id = id;
 	this->depends_on = depends_on;
 	this->dependents = dependents;

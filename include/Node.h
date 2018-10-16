@@ -8,11 +8,11 @@ class Node{
 
 public:
 	int id;
-	std::set<int> depends_on;
-	std::set<int> dependents;
+	std::vector<int> depends_on;
+	std::vector<int> dependents;
 	void (*func)();
 
-	Node(int id,std::set<int>depends_on,std::set<int>dependents,void (*func)());
+	Node(int id,std::vector<int>depends_on,std::vector<int>dependents,void (*func)());
 	void ThreadFunc();
 	std::thread ReturnFunc();
 

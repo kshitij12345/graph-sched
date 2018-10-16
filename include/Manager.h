@@ -24,7 +24,7 @@ extern std::vector<int> Completed;
 extern std::mutex UpdateLock;
 
 //Method which updates the To_Run and Completed
-void Update(std::set<int> dependents,int id);
+void Update(std::vector<int> dependents,int id);
 
 // class Node{
 

@@ -41,32 +41,32 @@ int main()
 	std::vector<Node> nodes;
 
 	// Info of First Node
-	std::set<int> depends_on;
-	std::set<int> dependents;
-	depends_on.insert(0);
-	dependents.insert(2);
-	dependents.insert(3);
+	std::vector<int> depends_on;
+	std::vector<int> dependents;
+	depends_on.push_back(0);
+	dependents.push_back(2);
+	dependents.push_back(3);
 	nodes.push_back(Node(1,depends_on,dependents,printer1));
 	
 	// Info of Second Node
-	std::set<int>dep2;
-	std::set<int>depn2;
-	dep2.insert(1);
-	depn2.insert(4);
+	std::vector<int>dep2;
+	std::vector<int>depn2;
+	dep2.push_back(1);
+	depn2.push_back(4);
 	nodes.push_back(Node(2,dep2,depn2,printer2));
 
 	// Info of Third Node
-	std::set<int>dep3;
-	std::set<int>depn3;
-	dep3.insert(1);
-	depn3.insert(4);
+	std::vector<int>dep3;
+	std::vector<int>depn3;
+	dep3.push_back(1);
+	depn3.push_back(4);
 	nodes.push_back(Node(3,dep3,depn3,printer3));
 
 	// Info of Fourth Node
-	std::set<int>dep4;
-	std::set<int>depn4;
-	dep4.insert(3);
-	dep4.insert(2);
+	std::vector<int>dep4;
+	std::vector<int>depn4;
+	dep4.push_back(3);
+	dep4.push_back(2);
 	nodes.push_back(Node(4,dep4,depn4,printer4));
 
 	// Get the src node ready to run.
