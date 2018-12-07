@@ -1,4 +1,4 @@
-#include "Node.h"
+#include "Manager.h"
 
 Node::Node(int id,std::vector<int>depends_on,std::vector<int>dependents,void (*func)()){
 	this->id = id;

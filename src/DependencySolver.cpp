@@ -1,4 +1,4 @@
-#include "Node.h"
+#include "Manager.h"
 
 /********** Functions to Run *****************/
 void printer1(){
@@ -37,9 +37,6 @@ void print_queue(std::queue<int> q)
 
 int main()
 {
-	// Vector of all the nodes to run.
-	std::vector<Node> nodes;
-
 	// Info of First Node
 	std::vector<int> depends_on;
 	std::vector<int> dependents;
@@ -103,6 +100,6 @@ int main()
 	for(long unsigned int i = 0;i<Completed.size();i++){
 		std::cout << Completed[i] << " ";
 	}
-	
+	std::cout << "\n";
 	return 0;
 }
