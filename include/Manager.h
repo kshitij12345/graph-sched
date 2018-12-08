@@ -20,8 +20,17 @@ struct Node{
 	std::vector<int> dependents;
 	void (*func)();
 
-	Node(int id,std::vector<int>depends_on,std::vector<int>dependents,void (*func)());
-	void operator()();
+	Node(int id,std::vector<int>depends_on,std::vector<int>dependents,void (*func)()){
+		this->id = id;
+		this->depends_on = depends_on;
+		this->dependents = dependents;
+		this->func = func;
+	}
+
+	void operator()(){
+		std::cout << "Func Id :" <<this->id << " has started\n\n"; 
+		this->func();
+	}
 };
 
 struct Manager{
