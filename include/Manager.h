@@ -1,9 +1,3 @@
-/*
-This file contains the declaration of structures and functions
-used to solve the dependencies
-*/
-
-
 #pragma once
 #include <thread>
 #include <queue>
@@ -15,6 +9,10 @@ used to solve the dependencies
 #include <map>
 
 struct BaseNode{
+	// This is the base struct for Nodes.
+	// It allows us to have derived nodes
+	// for different function signatures
+	// to exist in a single container.
 	int id;
 	std::vector<int> parents;
 	std::vector<int> children;
@@ -25,6 +23,9 @@ struct BaseNode{
 
 template <typename F>
 struct Node : BaseNode{
+	// Derived from Base, it holds the actual
+	// function. It can hold function of any
+	// signature.
 	F func;
 
 	Node(int id,std::vector<int>parents,std::vector<int>children,F func){
@@ -34,25 +35,32 @@ struct Node : BaseNode{
 		this->func = func;
 	}
 
-	// overload with call to wrapped function.
 	void call() const{
 		std::cout << "Func Id :" <<this->id << " has started\n"; 
 		this->func();
 	}
 };
 
-template <typename N1, typename N2>
-N1& operator<<(N1& self, N2& node){
+
+/********** UTIL FUNCTIONS *******************/
+// Below are helper functions
+// to make it simpler to create
+// the dependency graph.
+template <typename Node1, typename Node2>
+Node1& operator<<(Node1& self, Node2& node){
 	self.parents.push_back(node.id);
 	return self;
 }
 
-template <typename N1, typename N2>
-N1& operator>>(N1& self, N2& node){
+template <typename Node1, typename Node2>
+Node1& operator>>(Node1& self, Node2& node){
 	self.children.push_back(node.id);
 	return self;
 }
 
+// Wrapper like std::make_* to avoid
+// the need to write template arguments
+// i.e. weirds function signatures.
 template <typename F>
 Node<F> make_node(int id,F func){
 	std::vector<int>parents;
@@ -60,11 +68,13 @@ Node<F> make_node(int id,F func){
 	return Node<F>(id, parents, children, func);
 }
 
+/***********************************************/
+
 struct Manager{
-	// map to hold of all the nodes.
+	// Map to hold of all the nodes.
 	std::map<int, std::shared_ptr<BaseNode>> nodes;
 
-	// Nodes whose dependencies are resolved and can be run
+	// Nodes whose parents have completed and can be run
 	std::queue<int> to_run;
 	std::set<std::reference_wrapper<int>> to_run_set;
 
@@ -72,7 +82,8 @@ struct Manager{
 	std::vector<int> completed_nodes;
 	std::set<int> completed_set;
 
-	// Mutex to make sure the update of to_run and completed are atomic
+	// Mutex to make sure the update of to_run 
+	// and completed_nodes are `atomic`
 	std::mutex update_lock;
 
 	template <typename N>
@@ -80,10 +91,10 @@ struct Manager{
 		this->nodes[node.id] = std::make_shared<N>(node);
 	}
 
-	// Method which atomically updates the to_run and completed
+	// Method which `atomically` updates the to_run and completed
 	void update(std::vector<int> children,int id);
 
-	// returns bool representing if all parents
+	// Returns bool representing if all parents
 	// of current indexed node have finished
 	bool if_all_parents_fin(int i);
 

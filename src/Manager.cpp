@@ -1,19 +1,7 @@
 #include "Manager.h"
 
-// utility function
-// void print_queue(std::queue<int> q)
-// {
-//   while (!q.empty())
-//   {
-//     std::cout << q.front() << " ";
-//     q.pop();
-//   }
-//   std::cout << std::endl;
-//   return;
-// }
-
 bool Manager::if_all_parents_fin(int i){
-	std::vector<int> parents = (nodes[i])->parents;// Nodes are indexed rather than mapped. Change
+	std::vector<int> parents = nodes[i]->parents;
 
 	for(int j=0; j < parents.size(); j++){
 		if ((completed_set.find(parents[j])) == completed_set.end()){
@@ -25,7 +13,6 @@ bool Manager::if_all_parents_fin(int i){
 	return true;
 }
 
-//Update To_Run and Completed atomically.
 void Manager::update(std::vector<int> children,int id){
 	{
 		std::lock_guard<std::mutex> Lock(update_lock);
@@ -33,6 +20,9 @@ void Manager::update(std::vector<int> children,int id){
 		completed_nodes.push_back(id);
 		completed_set.insert(id);
 		
+		// Check to see if any children
+		// is ready to run. i.e. if all
+		// parents of the child have executed.
 		for(int i = 0;i<children.size();i++){
 			if(if_all_parents_fin(children[i])){
 				to_run.push(children[i]);
@@ -49,35 +39,36 @@ void Manager::execute(int src_node_idx){
 	to_run.push(src_node_idx);
 
 	// 1 Thread per Node Mode
-	std::vector<std::thread> Threads;
+	std::vector<std::thread> threads;
 	
 	// Run till all nodes are completed.
 	while(completed_nodes.size() < nodes.size()){
 		{
 			std::lock_guard<std::mutex> Lock(update_lock);
+
+			// Start all runnable nodes.
 			if (!to_run.empty()){
-				// start all runnable nodes.
 				int id = to_run.front();
 				to_run.pop();
+
+				// Make sure update is called
+				// at the end of execution
 				auto update_func = [=]{nodes[id]->call(); this->update(nodes[id]->children, id);};
-				Threads.push_back(std::thread(update_func));
+
+				threads.push_back(std::thread(update_func));
 			}
 
-		}
+		} //Scope of lock ends.
 		
 	}
 
-	// Join all the threads
-	for(long unsigned int i = 0;i<Threads.size();i++){
-		Threads[i].join();
+	for(long unsigned int i = 0;i<threads.size();i++){
+		threads[i].join();
 	}
-
-	// Should be empty
-	// print_queue(to_run);
 
 	std::cout << "Execution Completed \n";
 
-	// Print Nodes in order of execution.
+	// Print node id's in order of execution.
 	for(long unsigned int i = 0;i<completed_nodes.size();i++){
 		std::cout << completed_nodes[i] << " ";
 	}
