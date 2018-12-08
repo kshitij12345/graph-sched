@@ -12,6 +12,7 @@ used to solve the dependencies
 #include <mutex>
 #include <set>
 #include <memory>
+#include <map>
 
 struct BaseNode{
 	int id;
@@ -61,7 +62,7 @@ Node<F> make_node(int id,F func){
 
 struct Manager{
 	// Vector of all the nodes to run.
-	std::vector<std::shared_ptr<BaseNode>> nodes;
+	std::map<int, std::shared_ptr<BaseNode>> nodes;
 
 	// Nodes whose dependencies are resolved and can be run
 	std::queue<int> to_run;
@@ -76,7 +77,7 @@ struct Manager{
 
 	template <typename N>
 	void add_node(N node){
-		this->nodes.push_back(std::make_shared<N>(node));
+		this->nodes[node.id] = std::make_shared<N>(node);
 	}
 
 	// Method which atomically updates the to_run and completed
