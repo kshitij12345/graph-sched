@@ -74,12 +74,6 @@ struct Manager{
 	// Mutex to make sure the update of to_run and completed are atomic
 	std::mutex update_lock;
 
-	// template <typename F>
-	// void add_node(int id,std::vector<int>depends_on,std::vector<int>dependents,F func){
-	// 	Node<F> n = Node<F>(id, depends_on, dependents, func);
-	// 	this->nodes.push_back(std::make_shared<Node<F>>(n));
-	// }
-
 	template <typename N>
 	void add_node(N node){
 		this->nodes.push_back(std::make_shared<N>(node));
