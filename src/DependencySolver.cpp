@@ -28,33 +28,26 @@ int main()
 {
 	Manager m;
 
-	// Info of First Node
-	std::vector<int> depends_on;
-	std::vector<int> dependents;
-	dependents.push_back(1);
-	dependents.push_back(2);
-	m.add_node(0,depends_on,dependents,printer0);
+	auto node0 = make_node(0, printer0);
+	auto node1 = make_node(1, printer1);
+	auto node2 = make_node(2, printer2);
+	auto node3 = make_node(3, printer3);
 
-	// Info of Second Node
-	std::vector<int>dep2;
-	std::vector<int>depn2;
-	dep2.push_back(0);
-	depn2.push_back(3);
-	m.add_node(1,dep2,depn2,printer1);
+	// dependencies	
+	node0>>node1>>node2;
 
-	// Info of Third Node
-	std::vector<int>dep3;
-	std::vector<int>depn3;
-	dep3.push_back(0);
-	depn3.push_back(3);
-	m.add_node(2,dep3,depn3,printer2);
+	node1<<node0;
+	node1>>node3;
 
-	// Info of Fourth Node
-	std::vector<int>dep4;
-	std::vector<int>depn4;
-	dep4.push_back(1);
-	dep4.push_back(2);
-	m.add_node(3,dep4,depn4,printer3);
+	node2<<node0;
+	node2>>node3;
+
+	node3<<node2<<node1;
+
+	m.add_node(node0);
+	m.add_node(node1);
+	m.add_node(node2);
+	m.add_node(node3);
 
 	m.execute();
 
