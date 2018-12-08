@@ -9,6 +9,6 @@ Node::Node(int id,std::vector<int>depends_on,std::vector<int>dependents,void (*f
 
 // Not required
 void Node::operator()(){
-	std::cout << this->id << "Ssays hey\n"; 
+	std::cout << "Func Id :" <<this->id << " has started\n\n"; 
 	this->func();
 }
