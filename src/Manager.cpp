@@ -1,22 +1,22 @@
 #include "Manager.h"
 
 // utility function
-void print_queue(std::queue<int> q)
-{
-  while (!q.empty())
-  {
-    std::cout << q.front() << " ";
-    q.pop();
-  }
-  std::cout << std::endl;
-  return;
-}
+// void print_queue(std::queue<int> q)
+// {
+//   while (!q.empty())
+//   {
+//     std::cout << q.front() << " ";
+//     q.pop();
+//   }
+//   std::cout << std::endl;
+//   return;
+// }
 
 bool Manager::if_all_parents_fin(int i){
-	Node node = nodes[i];// Nodes are indexed rather than mapped. Change
+	std::vector<int> depends_on = (nodes[i])->depends_on;// Nodes are indexed rather than mapped. Change
 
-	for(int j=0; j < node.depends_on.size(); j++){
-		if ((completed_set.find(node.depends_on[j])) == completed_set.end()){
+	for(int j=0; j < depends_on.size(); j++){
+		if ((completed_set.find(depends_on[j])) == completed_set.end()){
 			// If not present
 			return false;
 		}
@@ -47,7 +47,6 @@ void Manager::update(std::vector<int> dependents,int id){
 void Manager::execute(int src_node_idx){
 	// Get the src node ready to run.
 	to_run.push(src_node_idx);
-	print_queue(to_run);
 
 	// 1 Thread per Node Mode
 	std::vector<std::thread> Threads;
@@ -57,9 +56,10 @@ void Manager::execute(int src_node_idx){
 		{
 			std::lock_guard<std::mutex> Lock(update_lock);
 			if (!to_run.empty()){
+				// start all runnable nodes.
 				int id = to_run.front();
 				to_run.pop();
-				auto update_func = [=]{nodes[id](); this->update(nodes[id].dependents, id);};
+				auto update_func = [=]{nodes[id]->call(); this->update(nodes[id]->dependents, id);};
 				Threads.push_back(std::thread(update_func));
 			}
 
@@ -73,10 +73,11 @@ void Manager::execute(int src_node_idx){
 	}
 
 	// Should be empty
-	print_queue(to_run);
+	// print_queue(to_run);
 
-	std::cout << "Completed \n";
-	// Print Nodes in order they completed.
+	std::cout << "Execution Completed \n";
+
+	// Print Nodes in order of execution.
 	for(long unsigned int i = 0;i<completed_nodes.size();i++){
 		std::cout << completed_nodes[i] << " ";
 	}
