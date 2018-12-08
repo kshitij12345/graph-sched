@@ -14,32 +14,39 @@ used to solve the dependencies
 #include <mutex>
 #include <set>
 
-class Node{
-
-public:
+struct Node{
 	int id;
 	std::vector<int> depends_on;
 	std::vector<int> dependents;
 	void (*func)();
 
 	Node(int id,std::vector<int>depends_on,std::vector<int>dependents,void (*func)());
-	void ThreadFunc();
-	std::thread ReturnFunc();
-
+	void operator()();
 };
 
-//Nodes whose dependencies are resolved and can be run
-extern std::queue<int> To_Run;
+struct Manager{
+	// Vector of all the nodes to run.
+	std::vector<Node> nodes;
 
-//Contains the id of completed nodes.
-extern std::vector<int> Completed;
+	// Nodes whose dependencies are resolved and can be run
+	std::queue<int> to_run;
+	std::set<std::reference_wrapper<int>> to_run_set;
 
-//Mutex to make sure the update of To_Run and Completed are atomic
-extern std::mutex UpdateLock;
+	// Contains the id of completed nodes.
+	std::vector<int> completed_nodes;
+	std::set<int> completed_set;
 
-// Vector of all the nodes to run.
-extern std::vector<Node> nodes;
+	// Mutex to make sure the update of to_run and completed are atomic
+	std::mutex update_lock;
 
-//Method which updates the To_Run and Completed
-void Update(std::vector<int> dependents,int id);
+	// Method which atomically updates the to_run and completed
+	void update(std::vector<int> dependents,int id);
+
+	// returns bool representing if all parents
+	// of current indexed node have finished
+	bool if_all_parents_fin(int i);
+
+	void execute(int src_node = 0);
+
+};
 

@@ -7,13 +7,8 @@ Node::Node(int id,std::vector<int>depends_on,std::vector<int>dependents,void (*f
 	this->func = func;
 }
 
-void Node::ThreadFunc(){
-	std::cout << this->id << "Ssays hey\n"; 
+// Not required
+void Node::operator()(){
+	std::cout << "Func Id :" <<this->id << " has started\n\n"; 
 	this->func();
-	Update(this->dependents,this->id);
-
-}
-
-std::thread Node::ReturnFunc(){
-	return std::thread([=]{ThreadFunc();});
 }
