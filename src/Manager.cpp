@@ -1,17 +1,22 @@
 #include "Manager.h"
 
-std::queue<int> To_Run;
-std::vector<int> Completed;
-std::mutex UpdateLock;
-std::set<std::reference_wrapper<int>> To_Run_Set;
-std::set<int> Completed_Set;
-std::vector<Node> nodes;
+// utility function
+void print_queue(std::queue<int> q)
+{
+  while (!q.empty())
+  {
+    std::cout << q.front() << " ";
+    q.pop();
+  }
+  std::cout << std::endl;
+  return;
+}
 
-bool if_all_parents_fin(int i){
+bool Manager::if_all_parents_fin(int i){
 	Node node = nodes[i-1];// Nodes are indexed rather than mapped. Change
 
 	for(int j=0; j < node.depends_on.size(); j++){
-		if ((Completed_Set.find(node.depends_on[j])) == Completed_Set.end()){
+		if ((completed_set.find(node.depends_on[j])) == completed_set.end()){
 			// If not present
 			return false;
 		}
@@ -21,24 +26,59 @@ bool if_all_parents_fin(int i){
 }
 
 //Update To_Run and Completed atomically.
-void Update(std::vector<int> dependents,int id){
+void Manager::update(std::vector<int> dependents,int id){
 	{
-		std::lock_guard<std::mutex> Lock(UpdateLock);
+		std::lock_guard<std::mutex> Lock(update_lock);
 
-		Completed.push_back(id);
-		Completed_Set.insert(id);
+		completed_nodes.push_back(id);
+		completed_set.insert(id);
 		
 		for(int i = 0;i<dependents.size();i++){
-			// If does not exist in To_Run then Add
-			//if (To_Run_Set.find(dependents[i]) == To_Run_Set.end()){
-				/* TO-DO: Check if all dependencies have run */
-				if(if_all_parents_fin(dependents[i])){
-					To_Run.push(dependents[i]);
-					To_Run_Set.insert(std::ref(To_Run.back()));
-				}
+			if(if_all_parents_fin(dependents[i])){
+				to_run.push(dependents[i]);
+				to_run_set.insert(std::ref(to_run.back()));
+			}
 					
-			//}
 		}
 
 	} // Scope of Lock ends (i.e. Mutex is up for grabs)
+}
+
+void Manager::execute(){
+	// Get the src node ready to run.
+	to_run.push(1);
+	print_queue(to_run);
+
+	// 1 Thread per Node Mode
+	std::vector<std::thread> Threads;
+	
+	// Run till all nodes are completed.
+	while(completed_nodes.size() < nodes.size()){
+		{
+			std::lock_guard<std::mutex> Lock(update_lock);
+			if (!to_run.empty()){
+				int id = to_run.front();
+				to_run.pop();
+				auto update_func = [=]{nodes[id-1](); this->update(nodes[id-1].dependents, id);};
+				Threads.push_back(std::thread(update_func));
+			}
+
+		}
+		
+	}
+
+	// Join all the threads
+	for(long unsigned int i = 0;i<Threads.size();i++){
+		Threads[i].join();
+	}
+
+	// Should be empty
+	print_queue(to_run);
+
+	std::cout << "Completed \n";
+	// Print Nodes in order they completed.
+	for(long unsigned int i = 0;i<completed_nodes.size();i++){
+		std::cout << completed_nodes[i] << " ";
+	}
+	std::cout << "\n";
 }
