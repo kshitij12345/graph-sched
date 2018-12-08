@@ -33,16 +33,19 @@ int main()
 	auto node2 = make_node(2, printer2);
 	auto node3 = make_node(3, printer3);
 
-	// dependencies	
-	node0>>node1>>node2;
+	// Dependeny Declaration
+	// Node >> Node_1 implies Node is parent of Node_1
+	// Node << Node_1 implies Node is child of Node_1
 
-	node1<<node0;
-	node1>>node3;
+	node0 >> node1 >> node2;
 
-	node2<<node0;
-	node2>>node3;
+	node1 << node0;
+	node1 >> node3;
 
-	node3<<node2<<node1;
+	node2 << node0;
+	node2 >> node3;
+
+	node3 << node2 <<node1;
 
 	m.add_node(node0);
 	m.add_node(node1);
