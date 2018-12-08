@@ -13,7 +13,7 @@ void print_queue(std::queue<int> q)
 }
 
 bool Manager::if_all_parents_fin(int i){
-	Node node = nodes[i-1];// Nodes are indexed rather than mapped. Change
+	Node node = nodes[i];// Nodes are indexed rather than mapped. Change
 
 	for(int j=0; j < node.depends_on.size(); j++){
 		if ((completed_set.find(node.depends_on[j])) == completed_set.end()){
@@ -44,9 +44,9 @@ void Manager::update(std::vector<int> dependents,int id){
 	} // Scope of Lock ends (i.e. Mutex is up for grabs)
 }
 
-void Manager::execute(){
+void Manager::execute(int src_node_idx){
 	// Get the src node ready to run.
-	to_run.push(1);
+	to_run.push(src_node_idx);
 	print_queue(to_run);
 
 	// 1 Thread per Node Mode
@@ -59,7 +59,7 @@ void Manager::execute(){
 			if (!to_run.empty()){
 				int id = to_run.front();
 				to_run.pop();
-				auto update_func = [=]{nodes[id-1](); this->update(nodes[id-1].dependents, id);};
+				auto update_func = [=]{nodes[id](); this->update(nodes[id].dependents, id);};
 				Threads.push_back(std::thread(update_func));
 			}
 
