@@ -1,10 +1,10 @@
 #include "Manager.h"
 
 bool Manager::if_all_parents_fin(int i){
-	std::vector<int> parents = nodes[i]->parents;
-
-	for(int j=0; j < parents.size(); j++){
-		if ((completed_set.find(parents[j])) == completed_set.end()){
+	// Check if parents of i'th node
+	// have executed
+	for(auto parent : this->nodes[i]->parents){
+		if ((completed.find(parent)) == completed.end()){
 			// If not present
 			return false;
 		}
@@ -13,20 +13,19 @@ bool Manager::if_all_parents_fin(int i){
 	return true;
 }
 
-void Manager::update(std::vector<int> children,int id){
+void Manager::update(std::set<int> children,int id){
 	{
 		std::lock_guard<std::mutex> Lock(update_lock);
-
-		completed_nodes.push_back(id);
-		completed_set.insert(id);
+		
+		completed_vec.push_back(id);
+		completed.insert(id);
 		
 		// Check to see if any children
 		// is ready to run. i.e. if all
 		// parents of the child have executed.
-		for(int i = 0;i<children.size();i++){
-			if(if_all_parents_fin(children[i])){
-				to_run.push(children[i]);
-				to_run_set.insert(std::ref(to_run.back()));
+		for(auto child : children){
+			if(if_all_parents_fin(child)){
+				to_run.push(child);
 			}
 					
 		}
@@ -42,7 +41,7 @@ void Manager::execute(int src_node_idx){
 	std::vector<std::thread> threads;
 	
 	// Run till all nodes are completed.
-	while(completed_nodes.size() < nodes.size()){
+	while(completed.size() < nodes.size()){
 		{
 			std::lock_guard<std::mutex> Lock(update_lock);
 
@@ -62,15 +61,15 @@ void Manager::execute(int src_node_idx){
 		
 	}
 
-	for(long unsigned int i = 0;i<threads.size();i++){
-		threads[i].join();
+	for(auto& thread : threads){
+		thread.join();
 	}
 
 	std::cout << "Execution Completed \n";
 
-	// Print node id's in order of execution.
-	for(long unsigned int i = 0;i<completed_nodes.size();i++){
-		std::cout << completed_nodes[i] << " ";
+	for(auto node : completed_vec){
+		std::cout << node << " ";
 	}
+
 	std::cout << "\n";
 }

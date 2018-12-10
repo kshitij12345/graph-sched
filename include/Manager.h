@@ -14,8 +14,8 @@ struct BaseNode{
 	// for different function signatures
 	// to exist in a single container.
 	int id;
-	std::vector<int> parents;
-	std::vector<int> children;
+	std::set<int> parents;
+	std::set<int> children;
 	
 	virtual ~BaseNode(){}
 	virtual void call() const = 0;
@@ -28,10 +28,8 @@ struct Node : BaseNode{
 	// signature.
 	F func;
 
-	Node(int id,std::vector<int>parents,std::vector<int>children,F func){
+	Node(int id,F func){
 		this->id = id;
-		this->parents = parents;
-		this->children = children;
 		this->func = func;
 	}
 
@@ -48,13 +46,15 @@ struct Node : BaseNode{
 // the dependency graph.
 template <typename Node1, typename Node2>
 Node1& operator<<(Node1& self, Node2& node){
-	self.parents.push_back(node.id);
+	self.parents.insert(node.id);
+	node.children.insert(self.id);
 	return self;
 }
 
 template <typename Node1, typename Node2>
 Node1& operator>>(Node1& self, Node2& node){
-	self.children.push_back(node.id);
+	self.children.insert(node.id);
+	node.parents.insert(self.id);
 	return self;
 }
 
@@ -63,9 +63,7 @@ Node1& operator>>(Node1& self, Node2& node){
 // i.e. weirds function signatures.
 template <typename F>
 Node<F> make_node(int id,F func){
-	std::vector<int>parents;
-	std::vector<int>children;
-	return Node<F>(id, parents, children, func);
+	return Node<F>(id, func);
 }
 
 /***********************************************/
@@ -74,25 +72,27 @@ struct Manager{
 	// Map to hold of all the nodes.
 	std::map<int, std::shared_ptr<BaseNode>> nodes;
 
-	// Nodes whose parents have completed and can be run
+	// Nodes whose parents have completed and can be run.
 	std::queue<int> to_run;
-	std::set<std::reference_wrapper<int>> to_run_set;
 
 	// Contains the id of completed nodes.
-	std::vector<int> completed_nodes;
-	std::set<int> completed_set;
+	std::set<int> completed;
+
+	// To keep track of completion order.
+	std::vector<int> completed_vec;
 
 	// Mutex to make sure the update of to_run 
 	// and completed_nodes are `atomic`
 	std::mutex update_lock;
 
+	// Add node for tracking
 	template <typename N>
 	void add_node(N node){
 		this->nodes[node.id] = std::make_shared<N>(node);
 	}
 
 	// Method which `atomically` updates the to_run and completed
-	void update(std::vector<int> children,int id);
+	void update(std::set<int> children,int id);
 
 	// Returns bool representing if all parents
 	// of current indexed node have finished
