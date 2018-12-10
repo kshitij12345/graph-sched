@@ -46,24 +46,16 @@ struct Node : BaseNode{
 // the dependency graph.
 template <typename Node1, typename Node2>
 Node1& operator<<(Node1& self, Node2& node){
-	self.parents.insert(node.id);
-	node.children.insert(self.id);
+	self->parents.insert(node->id);
+	node->children.insert(self->id);
 	return self;
 }
 
 template <typename Node1, typename Node2>
 Node1& operator>>(Node1& self, Node2& node){
-	self.children.insert(node.id);
-	node.parents.insert(self.id);
+	self->children.insert(node->id);
+	node->parents.insert(self->id);
 	return self;
-}
-
-// Wrapper like std::make_* to avoid
-// the need to write template arguments
-// i.e. weirds function signatures.
-template <typename F>
-Node<F> make_node(int id,F func){
-	return Node<F>(id, func);
 }
 
 /***********************************************/
@@ -85,10 +77,10 @@ struct Manager{
 	// and completed_nodes are `atomic`
 	std::mutex update_lock;
 
-	// Add node for tracking
-	template <typename N>
-	void add_node(N node){
-		this->nodes[node.id] = std::make_shared<N>(node);
+	template <typename F>
+	std::shared_ptr<BaseNode> append_node(int id, F func){
+		this->nodes[id] = std::make_shared<Node<F>>(Node<F>(id, func));
+		return this->nodes[id];
 	}
 
 	// Method which `atomically` updates the to_run and completed
@@ -99,6 +91,15 @@ struct Manager{
 	bool if_all_parents_fin(int i);
 
 	void execute(int src_node = 0);
+
+	// Returns the order in which nodes
+	// executed.
+	// Note : Returns empty vector if
+	// 		  none of the nodes have
+	// 		  executed
+	std::vector<int> execution_order(){
+		return completed_vec;
+	}
 
 };
 

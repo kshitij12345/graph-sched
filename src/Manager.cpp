@@ -64,12 +64,4 @@ void Manager::execute(int src_node_idx){
 	for(auto& thread : threads){
 		thread.join();
 	}
-
-	std::cout << "Execution Completed \n";
-
-	for(auto node : completed_vec){
-		std::cout << node << " ";
-	}
-
-	std::cout << "\n";
 }
