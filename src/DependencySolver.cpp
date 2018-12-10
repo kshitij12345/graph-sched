@@ -1,5 +1,6 @@
 #include "Manager.h"
 #include <unistd.h>
+#include <assert.h>
 
 /********** Functions to Run *****************/
 void printer0(){
@@ -8,7 +9,7 @@ void printer0(){
 }
 
 int printer1(){
-	usleep(500);
+	//usleep(500);
 	std::cout << "Hello from 1\n";
 	return 1;
 }
@@ -39,13 +40,7 @@ int main()
 
 	node0 >> node1 >> node2;
 
-	node1 << node0;
-	node1 >> node3;
-
-	node2 << node0;
-	node2 >> node3;
-
-	node3 << node2 <<node1;
+	node3 << node1 << node2;
 
 	m.add_node(node0);
 	m.add_node(node1);
@@ -54,7 +49,10 @@ int main()
 
 	m.execute();
 
-	// TO-DO : assert Completed order is 0, 2, 1, 3
+	// Expected Order of Execution
+	std::vector<int> expected_order = {0, 2, 1, 3};
+
+	assert(expected_order == m.completed_vec && "Graph didn't execute in expected order!!");
 	
 	return 0;
 }
