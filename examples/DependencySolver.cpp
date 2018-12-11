@@ -1,5 +1,5 @@
 #include "Manager.h"
-#include <unistd.h>
+#include <thread>
 #include <assert.h>
 
 /********** Functions to Run *****************/
@@ -9,7 +9,7 @@ void printer0(){
 }
 
 int printer1(){
-	usleep(500);
+	std::this_thread::sleep_for(std::chrono::microseconds(500));
 	std::cout << "Hello from 1\n";
 	return 1;
 }
@@ -29,10 +29,10 @@ int main()
 {
 	Manager m;
 
-	auto node0 = make_node(0, printer0);
-	auto node1 = make_node(1, printer1);
-	auto node2 = make_node(2, printer2);
-	auto node3 = make_node(3, printer3);
+	auto& node0 = m.append_node(0, printer0);
+	auto& node1 = m.append_node(1, printer1);
+	auto& node2 = m.append_node(2, printer2);
+	auto& node3 = m.append_node(3, printer3);
 
 	// Dependeny Declaration
 	// Node >> Node_1 implies Node is parent of Node_1
@@ -42,17 +42,12 @@ int main()
 
 	node3 << node1 << node2;
 
-	m.add_node(node0);
-	m.add_node(node1);
-	m.add_node(node2);
-	m.add_node(node3);
-
 	m.execute();
 
 	// Expected Order of Execution
 	std::vector<int> expected_order = {0, 2, 1, 3};
 
-	assert(expected_order == m.completed_vec && "Graph didn't execute in expected order!!");
+	assert(expected_order == m.execution_order() && "Graph didn't execute in expected order!!");
 	
 	return 0;
 }
