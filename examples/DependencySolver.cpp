@@ -1,6 +1,6 @@
 #include "Manager.h"
 #include <thread>
-#include <assert.h>
+#include <cassert>
 
 /********** Functions to Run *****************/
 void printer0(){

@@ -1,6 +1,5 @@
 #include "Manager.h"
-#include <unistd.h>
-#include <assert.h>
+#include <cassert>
 #include <stdio.h>
 
 /********** Functions to Run *****************/
