@@ -46,15 +46,15 @@ struct Node : BaseNode{
 // the dependency graph.
 template <typename Node1, typename Node2>
 Node1& operator<<(Node1& self, Node2& node){
-	self->parents.insert(node->id);
-	node->children.insert(self->id);
+	self.parents.insert(node.id);
+	node.children.insert(self.id);
 	return self;
 }
 
 template <typename Node1, typename Node2>
 Node1& operator>>(Node1& self, Node2& node){
-	self->children.insert(node->id);
-	node->parents.insert(self->id);
+	self.children.insert(node.id);
+	node.parents.insert(self.id);
 	return self;
 }
 
@@ -62,7 +62,7 @@ Node1& operator>>(Node1& self, Node2& node){
 
 struct Manager{
 	// Map to hold of all the nodes.
-	std::map<int, std::shared_ptr<BaseNode>> nodes;
+	std::map<int, std::unique_ptr<BaseNode>> nodes;
 
 	// Nodes whose parents have completed and can be run.
 	std::queue<int> to_run;
@@ -78,9 +78,9 @@ struct Manager{
 	std::mutex update_lock;
 
 	template <typename F>
-	std::shared_ptr<BaseNode> append_node(int id, F func){
-		this->nodes[id] = std::make_shared<Node<F>>(Node<F>(id, func));
-		return this->nodes[id];
+	BaseNode& append_node(int id, F func){
+		this->nodes[id] = std::unique_ptr<BaseNode>(new Node<F>(id, func));
+		return *(this->nodes[id]);
 	}
 
 	// Method which `atomically` updates the to_run and completed
