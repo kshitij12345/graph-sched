@@ -1,7 +1,8 @@
-#include "Manager.h"
 #include <cassert>
 #include <stdio.h>
 
+#include "Manager.h"
+#include "node_dsl.hpp"
 /********** Functions to Run *****************/
 void printer0(){
 	std::cout << "Hello from 0\n";
@@ -88,12 +89,8 @@ int main()
 	// Node >> Node_1 implies Node is parent of Node_1
 	// Node << Node_1 implies Node is child of Node_1
 
-	node0 >> node1 >> node2;
-
-	node3 << node1 << node2;
-
-	node4 << node3;
-
+	node0 >> (node1, node2) >> node3 >> node4;
+	
 	m.execute();
 
 	// Expected Order of Execution
