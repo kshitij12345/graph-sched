@@ -7,6 +7,12 @@
 #include <set>
 #include <memory>
 #include <map>
+#include <tuple>
+
+
+
+
+
 
 struct BaseNode{
 	// This is the base struct for Nodes.
@@ -44,19 +50,14 @@ struct Node : BaseNode{
 // Below are helper functions
 // to make it simpler to create
 // the dependency graph.
-template <typename Node1, typename Node2>
-Node1& operator<<(Node1& self, Node2& node){
-	self.parents.insert(node.id);
-	node.children.insert(self.id);
-	return self;
-}
+// template <typename T1, typename T2>
+// Node<T2>& operator<<(Node<T1>& self, Node<T2>& node){
+// 	self.parents.insert(node.id);
+// 	node.children.insert(self.id);
+// 	return node;
+// }
 
-template <typename Node1, typename Node2>
-Node1& operator>>(Node1& self, Node2& node){
-	self.children.insert(node.id);
-	node.parents.insert(self.id);
-	return self;
-}
+//template <typename T1, typename T2>
 
 /***********************************************/
 
