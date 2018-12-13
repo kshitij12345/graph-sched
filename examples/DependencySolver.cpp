@@ -11,7 +11,7 @@ void printer0(){
 }
 
 int printer1(){
-	std::this_thread::sleep_for(std::chrono::microseconds(10000));
+	std::this_thread::sleep_for(std::chrono::microseconds(500));
 	std::cout << "Hello from 1\n";
 	return 1;
 }
@@ -43,9 +43,9 @@ int main()
 
 #define inspect(n) \
 	std::cout << "Parents"#n << '\n';\
-	printv(node##n.parents)\
+	printv(node##n.parents, int)\
 	std::cout << "\nchildren"#n << '\n';\
-	printv(node##n.children)
+	printv(node##n.children, int)
 
 	inspect(0)
 	inspect(1)
