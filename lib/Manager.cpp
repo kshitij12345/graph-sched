@@ -33,6 +33,15 @@ void Manager::update(std::set<int> children,int id){
 	} // Scope of Lock ends (i.e. Mutex is up for grabs)
 }
 
+void Manager::explore_reachable_nodes(int src){
+	this->reachable_nodes.insert(src);
+	auto& node = *(this->nodes[src]);
+	// explore children
+	for(auto& child: node.children){
+		Manager::explore_reachable_nodes(child);
+	}
+}
+
 void Manager::execute(int src_node_idx){
 	// Get the src node ready to run.
 	to_run.push(src_node_idx);

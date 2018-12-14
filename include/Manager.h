@@ -52,6 +52,10 @@ struct Manager {
 	// To keep track of completion order.
 	std::vector<int> completed_vec;
 
+	// Reachable nodes from current src of
+	// execution
+	std::set<int> reachable_nodes;
+
 	// Mutex to make sure the update of to_run 
 	// and completed_nodes are `atomic`
 	std::mutex update_lock;
@@ -68,6 +72,10 @@ struct Manager {
 	// Returns bool representing if all parents
 	// of current indexed node have finished
 	bool if_all_parents_fin(int i);
+
+	// Method to explore all reachable nodes from
+	// the mentioned `src` node
+	void explore_reachable_nodes(int src);
 
 	void execute(int src_node = 0);
 
