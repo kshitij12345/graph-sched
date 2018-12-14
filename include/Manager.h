@@ -9,11 +9,6 @@
 #include <map>
 #include <tuple>
 
-
-
-
-
-
 struct BaseNode{
 	// This is the base struct for Nodes.
 	// It allows us to have derived nodes
@@ -24,7 +19,7 @@ struct BaseNode{
 	std::set<int> children;
 	
 	virtual ~BaseNode(){}
-	virtual void call() const = 0;
+	virtual void operator()() = 0;
 };
 
 template <typename F>
@@ -34,34 +29,17 @@ struct Node : BaseNode{
 	// signature.
 	F func;
 
-	Node(int id,F func){
+	template<typename F1>
+	Node(int id, F1&& f): func{std::move(f)} {
 		this->id = id;
-		this->func = func;
 	}
 
-	void call() const{
-		std::cout << "Func Id :" <<this->id << " has started\n"; 
-		this->func();
+	void operator()() { 
+		this->func(); 
 	}
 };
 
-
-/********** UTIL FUNCTIONS *******************/
-// Below are helper functions
-// to make it simpler to create
-// the dependency graph.
-// template <typename T1, typename T2>
-// Node<T2>& operator<<(Node<T1>& self, Node<T2>& node){
-// 	self.parents.insert(node.id);
-// 	node.children.insert(self.id);
-// 	return node;
-// }
-
-//template <typename T1, typename T2>
-
-/***********************************************/
-
-struct Manager{
+struct Manager {
 	// Map to hold of all the nodes.
 	std::map<int, std::unique_ptr<BaseNode>> nodes;
 
