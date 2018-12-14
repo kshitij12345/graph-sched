@@ -79,6 +79,8 @@ struct Manager {
 
 	void execute(int src_node = 0);
 
+	void clear_state();
+
 	// Returns the order in which nodes
 	// executed.
 	// Note : Returns empty vector if

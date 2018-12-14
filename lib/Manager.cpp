@@ -42,15 +42,25 @@ void Manager::explore_reachable_nodes(int src){
 	}
 }
 
+void Manager::clear_state(){
+	this->reachable_nodes = {};
+	this->completed = {};
+}
+
 void Manager::execute(int src_node_idx){
 	// Get the src node ready to run.
 	to_run.push(src_node_idx);
+
+	// reset completion order for this execution
+	this->completed_vec = {};
+
+	this->explore_reachable_nodes(src_node_idx);
 
 	// 1 Thread per Node Mode
 	std::vector<std::thread> threads;
 	
 	// Run till all nodes are completed.
-	while(completed.size() < nodes.size()){
+	while(completed.size() < reachable_nodes.size()){
 		{
 			std::lock_guard<std::mutex> Lock(update_lock);
 
@@ -76,4 +86,7 @@ void Manager::execute(int src_node_idx){
 	for(auto& thread : threads){
 		thread.join();
 	}
+
+	// for next execution
+	Manager::clear_state();
 }
