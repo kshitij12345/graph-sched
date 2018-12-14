@@ -45,7 +45,7 @@ TEST_CASE( "Node DSL constructs graph correctly.", "[node-dsl]" ) {
 
 TEST_CASE( "Graph execution order is correct.", "[manager]" ) {
 	auto fun0 = []() {};
-	auto fun1 = []() { std::this_thread::sleep_for(std::chrono::microseconds(500)); };
+	auto fun1 = []() { std::this_thread::sleep_for(std::chrono::microseconds(5000)); };
 
 	Manager m;
 
