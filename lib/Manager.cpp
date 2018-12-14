@@ -52,7 +52,10 @@ void Manager::execute(int src_node_idx){
 
 				// Make sure update is called
 				// at the end of execution
-				auto update_func = [=]{nodes[id]->call(); this->update(nodes[id]->children, id);};
+				auto update_func = [=] {
+					(*nodes[id])();
+					this->update(nodes[id]->children, id);
+				};
 
 				threads.push_back(std::thread(update_func));
 			}
