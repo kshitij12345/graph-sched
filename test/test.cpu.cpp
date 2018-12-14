@@ -68,30 +68,29 @@ TEST_CASE( "Graph execution order is correct.", "[manager]" ) {
 }
 
 TEST_CASE( "Reachable nodes.", "[manager]" ) {
-	auto fun0 = []() {};
-	auto fun1 = []() { std::this_thread::sleep_for(std::chrono::microseconds(5000)); };
+	auto func = []() {};
 
 	Manager m;
 
-	auto& node0 = m.append_node(0, fun0);
-	auto& node1 = m.append_node(1, fun1);
-	auto& node2 = m.append_node(2, fun0);
-	auto& node3 = m.append_node(3, fun0);
+	auto& node0 = m.append_node(0, func);
+	auto& node1 = m.append_node(1, func);
+	auto& node2 = m.append_node(2, func);
+	auto& node3 = m.append_node(3, func);
 
 	node0 >> (node1, node2);
 	m.explore_reachable_nodes(0);
 	std::set<int> expected_nodes_from_0 = {0, 1, 2};
 	REQUIRE(m.reachable_nodes == expected_nodes_from_0);
-	m.reachable_nodes = {};
+	m.clear_state();
 
 	m.explore_reachable_nodes(1);
 	std::set<int> expected_nodes_from_1 = {1};
 	REQUIRE(m.reachable_nodes == expected_nodes_from_1);
-	m.reachable_nodes = {};
+	m.clear_state();
 
 	node2 >> node3;
 	m.explore_reachable_nodes(2);
 	std::set<int> expected_nodes_from_2 = {2, 3};
 	REQUIRE(m.reachable_nodes == expected_nodes_from_2);
-	m.reachable_nodes = {};	
+	m.clear_state();	
 }
