@@ -56,6 +56,8 @@ struct Manager {
 	// execution
 	std::set<int> reachable_nodes;
 
+	std::set<int> unmet_deps;
+
 	// Mutex to make sure the update of to_run 
 	// and completed_nodes are `atomic`
 	std::mutex update_lock;
@@ -76,6 +78,8 @@ struct Manager {
 	// Method to explore all reachable nodes from
 	// the mentioned `src` node
 	void explore_reachable_nodes(int src);
+
+	void check_dependencies();
 
 	void execute(int src_node = 0);
 
