@@ -42,7 +42,6 @@ TEST_CASE( "Node DSL constructs graph correctly.", "[node-dsl]" ) {
 	REQUIRE(node3.children == expected_node3_children);
 }
 
-
 TEST_CASE( "Graph execution order is correct.", "[manager]" ) {
 	auto fun0 = []() {};
 	auto fun1 = []() { std::this_thread::sleep_for(std::chrono::microseconds(5000)); };
@@ -93,4 +92,22 @@ TEST_CASE( "Reachable nodes.", "[manager]" ) {
 	std::set<int> expected_nodes_from_2 = {2, 3};
 	REQUIRE(m.reachable_nodes == expected_nodes_from_2);
 	m.clear_state();	
+}
+
+TEST_CASE( "Unmet Dependencies.", "[manager]" ) {
+	auto func = []() {};
+
+	Manager m;
+
+	auto& node0 = m.append_node(0, func);
+	auto& node1 = m.append_node(1, func);
+	auto& node2 = m.append_node(2, func);
+	auto& node3 = m.append_node(3, func);
+
+	node0 >> (node1, node2) >> node3;
+	
+	REQUIRE_NOTHROW(m.execute(0));
+	REQUIRE_THROWS(m.execute(1));
+	REQUIRE_THROWS(m.execute(2));
+	REQUIRE_THROWS(m.execute(3));
 }
