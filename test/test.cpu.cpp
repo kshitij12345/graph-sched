@@ -57,12 +57,20 @@ TEST_CASE( "Graph execution order is correct.", "[manager]" ) {
 	m.execute(0);
 
 	std::vector<int> expected_order_0 = {0, 2, 1};
+	if (std::thread::hardware_concurrency() == 1){
+		expected_order_0 = {0, 1, 2};
+	}
+
 	REQUIRE(m.execution_order() == expected_order_0);
 	
 	(node1, node2) >> node3;
 	m.execute(0);
 	
 	std::vector<int> expected_order_1 = {0, 2, 1, 3};
+	if (std::thread::hardware_concurrency() == 1){
+		expected_order_1 = {0, 1, 2, 3};
+	}
+	
 	REQUIRE(m.execution_order() == expected_order_1);
 }
 
@@ -131,5 +139,9 @@ TEST_CASE( "Max Thread.", "[manager]" ) {
 
 	m.execute(0);
 	std::vector<int> expected_order_mul_thread = {0, 2, 1, 3};
+	if (std::thread::hardware_concurrency() == 1){
+		expected_order_mul_thread = {0, 1, 2, 3};
+	}
+	
 	REQUIRE(m.execution_order() == expected_order_mul_thread);
 }
