@@ -33,15 +33,58 @@ void Manager::update(std::set<int> children,int id){
 	} // Scope of Lock ends (i.e. Mutex is up for grabs)
 }
 
+void Manager::explore_reachable_nodes(int src){
+	this->reachable_nodes.insert(src);
+	auto& node = *(this->nodes[src]);
+	// explore children
+	for(auto& child: node.children){
+		Manager::explore_reachable_nodes(child);
+	}
+}
+
+void Manager::check_dependencies(){
+	for(auto& node_id : this->reachable_nodes){
+		auto& node = *(this->nodes[node_id]);
+		// check if all parents exist in reachable
+		for (auto& parent: node.parents){
+			if(reachable_nodes.find(parent) == reachable_nodes.end()){
+				this->unmet_deps.insert(node_id);
+			}
+		}
+	}
+}
+
+void Manager::clear_state(){
+	this->reachable_nodes = {};
+	this->completed = {};
+	this->unmet_deps = {};
+	this->completed_vec = {};
+
+}
+
 void Manager::execute(int src_node_idx){
+	Manager::clear_state();
 	// Get the src node ready to run.
 	to_run.push(src_node_idx);
+
+	explore_reachable_nodes(src_node_idx);
+	check_dependencies();
+
+	if(unmet_deps.size()){
+		std::string error_msg = "";
+		for(auto& node: unmet_deps){
+			error_msg += "Error: Node " + std::to_string(node) + " has unmet dependencies.\n"; 
+		}
+
+		error_msg += "Fix these unmet deps\n";
+		throw(error_msg);
+	}
 
 	// 1 Thread per Node Mode
 	std::vector<std::thread> threads;
 	
 	// Run till all nodes are completed.
-	while(completed.size() < nodes.size()){
+	while(completed.size() < reachable_nodes.size()){
 		{
 			std::lock_guard<std::mutex> Lock(update_lock);
 
@@ -67,4 +110,7 @@ void Manager::execute(int src_node_idx){
 	for(auto& thread : threads){
 		thread.join();
 	}
+
+	// for next execution
+	//Manager::clear_state();
 }

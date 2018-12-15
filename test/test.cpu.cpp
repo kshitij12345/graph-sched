@@ -42,7 +42,6 @@ TEST_CASE( "Node DSL constructs graph correctly.", "[node-dsl]" ) {
 	REQUIRE(node3.children == expected_node3_children);
 }
 
-
 TEST_CASE( "Graph execution order is correct.", "[manager]" ) {
 	auto fun0 = []() {};
 	auto fun1 = []() { std::this_thread::sleep_for(std::chrono::microseconds(5000)); };
@@ -54,9 +53,61 @@ TEST_CASE( "Graph execution order is correct.", "[manager]" ) {
 	auto& node2 = m.append_node(2, fun0);
 	auto& node3 = m.append_node(3, fun0);
 
-	node0 >> (node1, node2) >> node3;
-	m.execute();
+	node0 >> (node1, node2);
+	m.execute(0);
 
-	std::vector<int> expected_order = {0, 2, 1, 3};
-	REQUIRE(m.execution_order() == expected_order);
+	std::vector<int> expected_order_0 = {0, 2, 1};
+	REQUIRE(m.execution_order() == expected_order_0);
+	
+	(node1, node2) >> node3;
+	m.execute(0);
+	
+	std::vector<int> expected_order_1 = {0, 2, 1, 3};
+	REQUIRE(m.execution_order() == expected_order_1);
+}
+
+TEST_CASE( "Reachable nodes.", "[manager]" ) {
+	auto func = []() {};
+
+	Manager m;
+
+	auto& node0 = m.append_node(0, func);
+	auto& node1 = m.append_node(1, func);
+	auto& node2 = m.append_node(2, func);
+	auto& node3 = m.append_node(3, func);
+
+	node0 >> (node1, node2);
+	m.explore_reachable_nodes(0);
+	std::set<int> expected_nodes_from_0 = {0, 1, 2};
+	REQUIRE(m.reachable_nodes == expected_nodes_from_0);
+	m.clear_state();
+
+	m.explore_reachable_nodes(1);
+	std::set<int> expected_nodes_from_1 = {1};
+	REQUIRE(m.reachable_nodes == expected_nodes_from_1);
+	m.clear_state();
+
+	node2 >> node3;
+	m.explore_reachable_nodes(2);
+	std::set<int> expected_nodes_from_2 = {2, 3};
+	REQUIRE(m.reachable_nodes == expected_nodes_from_2);
+	m.clear_state();	
+}
+
+TEST_CASE( "Unmet Dependencies.", "[manager]" ) {
+	auto func = []() {};
+
+	Manager m;
+
+	auto& node0 = m.append_node(0, func);
+	auto& node1 = m.append_node(1, func);
+	auto& node2 = m.append_node(2, func);
+	auto& node3 = m.append_node(3, func);
+
+	node0 >> (node1, node2) >> node3;
+	
+	REQUIRE_NOTHROW(m.execute(0));
+	REQUIRE_THROWS(m.execute(1));
+	REQUIRE_THROWS(m.execute(2));
+	REQUIRE_THROWS(m.execute(3));
 }
