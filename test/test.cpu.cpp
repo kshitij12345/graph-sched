@@ -111,3 +111,25 @@ TEST_CASE( "Unmet Dependencies.", "[manager]" ) {
 	REQUIRE_THROWS(m.execute(2));
 	REQUIRE_THROWS(m.execute(3));
 }
+
+TEST_CASE( "Max Thread.", "[manager]" ) {
+	auto fun0 = []() {};
+	auto fun1 = []() { std::this_thread::sleep_for(std::chrono::microseconds(5000)); };
+
+	Manager m;
+
+	auto& node0 = m.append_node(0, fun0);
+	auto& node1 = m.append_node(1, fun1);
+	auto& node2 = m.append_node(2, fun0);
+	auto& node3 = m.append_node(3, fun0);
+
+	node0 >> (node1, node2) >> node3;
+	m.execute(0, 1);
+
+	std::vector<int> expected_order = {0, 1, 2, 3};
+	REQUIRE(m.execution_order() == expected_order);
+
+	m.execute(0);
+	std::vector<int> expected_order_mul_thread = {0, 2, 1, 3};
+	REQUIRE(m.execution_order() == expected_order_mul_thread);
+}

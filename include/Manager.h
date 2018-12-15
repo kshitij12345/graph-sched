@@ -57,6 +57,9 @@ struct Manager {
 	std::set<int> reachable_nodes;
 
 	std::set<int> unmet_deps;
+	
+	// Limit maximum inflight threads
+	int inflight_threads;
 
 	// Mutex to make sure the update of to_run 
 	// and completed_nodes are `atomic`
@@ -81,7 +84,7 @@ struct Manager {
 
 	void check_dependencies();
 
-	void execute(int src_node = 0);
+	void execute(int src_node = 0, int max_thread = std::thread::hardware_concurrency());
 
 	void clear_state();
 

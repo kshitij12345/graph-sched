@@ -17,6 +17,8 @@ void Manager::update(std::set<int> children,int id){
 	{
 		std::lock_guard<std::mutex> Lock(update_lock);
 		
+		this->inflight_threads--;
+
 		completed_vec.push_back(id);
 		completed.insert(id);
 		
@@ -30,6 +32,10 @@ void Manager::update(std::set<int> children,int id){
 					
 		}
 
+		// return before scope of lock
+		// to ensure thread ends before
+		// lock is up for grabs
+		return;
 	} // Scope of Lock ends (i.e. Mutex is up for grabs)
 }
 
@@ -55,15 +61,20 @@ void Manager::check_dependencies(){
 }
 
 void Manager::clear_state(){
+	// clear all the state
+	// variables for a 
+	// new execution.
 	this->reachable_nodes = {};
 	this->completed = {};
 	this->unmet_deps = {};
 	this->completed_vec = {};
-
+	this->inflight_threads = 0;
 }
 
-void Manager::execute(int src_node_idx){
-	Manager::clear_state();
+void Manager::execute(int src_node_idx, int max_thread){
+
+	clear_state();
+	
 	// Get the src node ready to run.
 	to_run.push(src_node_idx);
 
@@ -80,7 +91,6 @@ void Manager::execute(int src_node_idx){
 		throw(error_msg);
 	}
 
-	// 1 Thread per Node Mode
 	std::vector<std::thread> threads;
 	
 	// Run till all nodes are completed.
@@ -89,9 +99,12 @@ void Manager::execute(int src_node_idx){
 			std::lock_guard<std::mutex> Lock(update_lock);
 
 			// Start all runnable nodes.
-			if (!to_run.empty()){
+			// given that we have thread to execute.
+			if (!to_run.empty() && (this->inflight_threads < max_thread)){
 				int id = to_run.front();
 				to_run.pop();
+
+				this->inflight_threads++;
 
 				// Make sure update is called
 				// at the end of execution
@@ -111,6 +124,4 @@ void Manager::execute(int src_node_idx){
 		thread.join();
 	}
 
-	// for next execution
-	//Manager::clear_state();
 }
