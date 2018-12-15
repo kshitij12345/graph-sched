@@ -3,54 +3,45 @@
 
 #include "Manager.h"
 #include "node_dsl.hpp"
-
+#include <thrust/device_vector.h>
+#include <thrust/transform.h>
+#include <thrust/sequence.h>
+#include <thrust/copy.h>
+#include <thrust/fill.h>
+#include <thrust/replace.h>
+#include <thrust/functional.h>
 
 #define CATCH_CONFIG_MAIN
 #include <catch/catch.hpp>
 
-
-#define COLUMNS 3
-#define ROWS 2
-
-__global__ void add(int *a, int *b, int *c)
+int cuda_func()
 {
-	int x = blockIdx.x;
-	int y = blockIdx.y;
-	int i = (COLUMNS*y) + x;
-	c[i] = a[i] + b[i];
-}
+  // allocate three device_vectors with 10 elements
+  thrust::device_vector<int> X(10);
+  thrust::device_vector<int> Y(10);
+  thrust::device_vector<int> Z(10);
 
-void cuda_func() {
-	int a[ROWS][COLUMNS], b[ROWS][COLUMNS], c[ROWS][COLUMNS];
-	int *dev_a, *dev_b, *dev_c;
-	
-	cudaMalloc((void **) &dev_a, ROWS*COLUMNS*sizeof(int));
-	cudaMalloc((void **) &dev_b, ROWS*COLUMNS*sizeof(int));
-	cudaMalloc((void **) &dev_c, ROWS*COLUMNS*sizeof(int));
-	
-	for (int y = 0; y < ROWS; y++){// Fill Arrays
-		for (int x = 0; x < COLUMNS; x++)
-		{
-			a[y][x] = x;
-			b[y][x] = y;
-		}
-	}
+  // initialize X to 0,1,2,3, ....
+  thrust::sequence(X.begin(), X.end());
 
-	cudaMemcpy(dev_a, a, ROWS*COLUMNS*sizeof(int),
-	cudaMemcpyHostToDevice);
-	cudaMemcpy(dev_b, b, ROWS*COLUMNS*sizeof(int),
-	cudaMemcpyHostToDevice);
-	
-	dim3 grid(COLUMNS,ROWS);
-	add<<<grid,1>>>(dev_a, dev_b, dev_c);
-	
-	cudaMemcpy(c, dev_c, ROWS*COLUMNS*sizeof(int),
-	cudaMemcpyDeviceToHost);
+  // compute Y = -X
+  thrust::transform(X.begin(), X.end(), Y.begin(), thrust::negate<int>());
+
+  // fill Z with twos
+  thrust::fill(Z.begin(), Z.end(), 2);
+
+  // compute Y = X mod 2
+  thrust::transform(X.begin(), X.end(), Z.begin(), Y.begin(), thrust::modulus<int>());
+
+  // replace all the ones in Y with tens
+  thrust::replace(Y.begin(), Y.end(), 1, 10);
+ 
+  return 0; 
 }
 
 TEST_CASE( "CUDA Graph execution order is correct.", "[CUDA-manager]" ) {
 	auto fun0 = []() {};
-	auto fun1 = []() { std::this_thread::sleep_for(std::chrono::microseconds(500)); };
+	auto fun1 = []() { std::this_thread::sleep_for(std::chrono::microseconds(5000)); };
 
 	Manager m;
 
