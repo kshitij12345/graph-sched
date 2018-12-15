@@ -61,8 +61,11 @@ TEST_CASE( "CUDA Graph execution order is correct.", "[CUDA-manager]" ) {
 	auto& node4 = m.append_node(4, cuda_func);
 
 	node0 >> (node1, node2) >> node3 >> node4;
-	m.execute();
+	m.execute(0);
 
 	std::vector<int> expected_order = {0, 2, 1, 3, 4};
+	if (std::thread::hardware_concurrency() == 1){
+		expected_order = {0, 1, 2, 3, 4};
+	}
 	REQUIRE(m.execution_order() == expected_order);
 }
