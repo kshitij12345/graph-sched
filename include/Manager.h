@@ -89,12 +89,19 @@ struct Manager {
 	// the mentioned `src` node
 	void explore_reachable_nodes(int src);
 
+	// Check to see if current reachable nodes
+	// have all dependencies satisfied
 	void check_dependencies();
 
+	// Start executing runnable threads
 	void schedule();
 
+	// Execute all reachable threads from
+	// `src_node`.
 	void execute(int src_node = 0, int max_thread = std::thread::hardware_concurrency());
 	
+	// Reset all state variables for a
+	// new execution.
 	void clear_state();
 
 	// Returns the order in which nodes

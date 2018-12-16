@@ -17,6 +17,7 @@ void Manager::update(std::set<int> children,int id){
 	{
 		std::lock_guard<std::mutex> Lock(update_lock);
 		
+		// Notify that this thread has completed.
 		this->inflight_threads--;
 
 		this->completed_vec.push_back(id);
@@ -35,6 +36,7 @@ void Manager::update(std::set<int> children,int id){
 	} // Scope of Lock ends (i.e. Mutex is up for grabs)
 }
 
+// Depth-first search to explore reachable nodes.
 void Manager::explore_reachable_nodes(int src){
 	this->reachable_nodes.insert(src);
 	auto& node = *(this->nodes[src]);
@@ -44,6 +46,9 @@ void Manager::explore_reachable_nodes(int src){
 	}
 }
 
+// Check if dependencies of all reachable nodes
+// are satisfied. throws if any node has incomplete
+// dependencies
 void Manager::check_dependencies(){
 	for(auto& node_id : this->reachable_nodes){
 		auto& node = *(this->nodes[node_id]);
@@ -85,7 +90,9 @@ void Manager::schedule(){
 	{
 		std::lock_guard<std::mutex> Lock(update_lock);
 
-		// Start all runnable nodes.
+		// Start all runnable nodes given that
+		// we have task to run and are below
+		// max_threads limit.
 		while(!to_run.empty() && inflight_threads < max_threads){
 			int id = to_run.front();
 			to_run.pop();
@@ -105,7 +112,7 @@ void Manager::schedule(){
 
 	} //Scope of lock ends.
 
-	// Notify if all reachable nodes have completed.
+	// Notify main thread if all reachable nodes have completed.
 	if (completed.size() == reachable_nodes.size()){
 		this->exec_complete = true;
 		has_completed.notify_one();
@@ -115,17 +122,17 @@ void Manager::schedule(){
 void Manager::execute(int src_node_idx, int max_threads){
 	this->max_threads = max_threads;
 	clear_state();
-	
-	// Get the src node ready to run.
-	to_run.push(src_node_idx);
 
 	explore_reachable_nodes(src_node_idx);
 	check_dependencies();
 
+	// Get the src node ready to run.
+	to_run.push(src_node_idx);
+
 	// Schedule first node
 	Manager::schedule();
 
-	// wait until all reachable threads have executed.
+	// Wait until all reachable threads have executed.
 	std::unique_lock<std::mutex> lock(update_lock);
 	has_completed.wait(lock, [this]{return this->exec_complete;});
 	
