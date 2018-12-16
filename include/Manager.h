@@ -8,6 +8,7 @@
 #include <memory>
 #include <map>
 #include <tuple>
+#include <condition_variable>
 
 struct BaseNode{
 	// This is the base struct for Nodes.
@@ -34,8 +35,8 @@ struct Node : BaseNode{
 		this->id = id;
 	}
 
-	void operator()() { 
-		this->func(); 
+	void operator()() {
+		this->func();
 	}
 };
 
@@ -60,10 +61,16 @@ struct Manager {
 	
 	// Limit maximum inflight threads
 	int inflight_threads;
+	int max_threads;
 
 	// Mutex to make sure the update of to_run 
 	// and completed_nodes are `atomic`
 	std::mutex update_lock;
+
+	std::condition_variable has_completed;
+	bool exec_complete = false;
+
+	std::vector<std::thread> threads;
 
 	template <typename F>
 	BaseNode& append_node(int id, F func){
@@ -84,8 +91,10 @@ struct Manager {
 
 	void check_dependencies();
 
-	void execute(int src_node = 0, int max_thread = std::thread::hardware_concurrency());
+	void schedule();
 
+	void execute(int src_node = 0, int max_thread = std::thread::hardware_concurrency());
+	
 	void clear_state();
 
 	// Returns the order in which nodes
