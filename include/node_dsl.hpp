@@ -36,14 +36,14 @@ for_each_node_inv(BaseNode& rhs, const std::tuple<Tp...>& lhs)
 	for_each_node_inv<I + 1, Tp...>(rhs, lhs);
 }
 
-template <std::size_t I = 0, template <typename ...> class Tup1, template <typename ...> class Tup2, typename ...A, typename ...B>
-inline typename std::enable_if<I == sizeof...(A), void>::type
-for_each_node_dense(const Tup1<A...>& lhs, const Tup2<B...> rhs)
+template <std::size_t I = 0, typename ...Tp, typename ...Tn>
+inline typename std::enable_if<I == sizeof...(Tp), void>::type
+for_each_node_dense(const std::tuple<Tp...>& lhs, const std::tuple<Tn...> rhs)
 { }
 
-template <std::size_t I = 0, template <typename ...> class Tup1, template <typename ...> class Tup2, typename ...A, typename ...B>
-inline typename std::enable_if<I < sizeof...(A), void>::type
-for_each_node_dense(const Tup1<A...>& lhs, const Tup2<B...> rhs)
+template <std::size_t I = 0, typename ...Tp, typename ...Tn>
+inline typename std::enable_if<I < sizeof...(Tp), void>::type
+for_each_node_dense(const std::tuple<Tp...>& lhs, const std::tuple<Tn...> rhs)
 {
 	for_each_node_inv(std::get<I>(lhs), rhs);
 	for_each_node_dense<I + 1ul>(lhs,rhs);
@@ -70,8 +70,8 @@ std::tuple<T1&...> operator>>(BaseNode& lhs, const std::tuple<T1&...>& rhs){
 	return rhs;
 }
 
-template <template <typename ...> class Tup1, template <typename ...> class Tup2, typename ...A, typename ...B>
-const Tup2<B...>& operator>>(const Tup1<A...>& lhs, const Tup2<B...>& rhs){
+template <typename ...T1, typename ...T2>
+const std::tuple<T2...>& operator>>(const std::tuple<T1...>& lhs, const std::tuple<T2...>& rhs){
 	for_each_node_dense(lhs, rhs);
 	return rhs;
 }
