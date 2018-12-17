@@ -1,8 +1,7 @@
 #include <cassert>
 #include <stdio.h>
 
-#include "Manager.hpp"
-#include "Node.hpp"
+#include <gsched/Manager.hpp>
 #include <thrust/device_vector.h>
 #include <thrust/transform.h>
 #include <thrust/sequence.h>

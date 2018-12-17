@@ -2,7 +2,7 @@
 #include <cassert>
 #include <iterator>
 
-#include "Manager.hpp"
+#include <gsched/Manager.hpp>
 
 #define CATCH_CONFIG_MAIN
 #include <catch/catch.hpp>
