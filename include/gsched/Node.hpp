@@ -1,8 +1,39 @@
 #pragma once
 #include <tuple>
 #include <utility>
+#include <set>
 
-#include "Manager.h"
+namespace gsched{
+
+struct BaseNode{
+	// This is the base struct for Nodes.
+	// It allows us to have derived nodes
+	// for different function signatures
+	// to exist in a single container.
+	int id;
+	std::set<int> parents;
+	std::set<int> children;
+	
+	virtual ~BaseNode(){}
+	virtual void operator()() = 0;
+};
+
+template <typename F>
+struct Node : BaseNode{
+	// Derived from Base, it holds the actual
+	// function. It can hold function of any
+	// signature.
+	F func;
+
+	template<typename F1>
+	Node(int id, F1&& f): func{std::move(f)} {
+		this->id = id;
+	}
+
+	void operator()() {
+		this->func();
+	}
+};
 
 inline BaseNode& operator>>(BaseNode& lhs, BaseNode& rhs){
 	lhs.children.insert(rhs.id);
@@ -49,29 +80,31 @@ for_each_node_dense(const std::tuple<Tp...>& lhs, const std::tuple<Tn...> rhs)
 	for_each_node_dense<I + 1ul>(lhs,rhs);
 }
 
-std::tuple<BaseNode&, BaseNode&> operator,(BaseNode& lhs, BaseNode& rhs){
+inline std::tuple<BaseNode&, BaseNode&> operator,(BaseNode& lhs, BaseNode& rhs){
 	return std::forward_as_tuple(lhs, rhs);
 }
 
 template<typename...T1>
-std::tuple<T1&..., BaseNode&> operator,(const std::tuple<T1&...>& lhs, BaseNode& rhs){
+inline std::tuple<T1&..., BaseNode&> operator,(const std::tuple<T1&...>& lhs, BaseNode& rhs){
 	return std::tuple_cat(lhs, std::forward_as_tuple(rhs));
 }
 
 template<typename... T1>
-BaseNode& operator>>(const std::tuple<T1&...>& lhs, BaseNode& rhs){
+inline BaseNode& operator>>(const std::tuple<T1&...>& lhs, BaseNode& rhs){
 	for_each_node(lhs, rhs);
 	return rhs;
 }
 
 template<typename... T1>
-std::tuple<T1&...> operator>>(BaseNode& lhs, const std::tuple<T1&...>& rhs){
+inline std::tuple<T1&...> operator>>(BaseNode& lhs, const std::tuple<T1&...>& rhs){
 	for_each_node_inv(lhs, rhs);
 	return rhs;
 }
 
 template <typename ...T1, typename ...T2>
-const std::tuple<T2...>& operator>>(const std::tuple<T1...>& lhs, const std::tuple<T2...>& rhs){
+inline const std::tuple<T2...>& operator>>(const std::tuple<T1...>& lhs, const std::tuple<T2...>& rhs){
 	for_each_node_dense(lhs, rhs);
 	return rhs;
 }
+
+} // namespace ends

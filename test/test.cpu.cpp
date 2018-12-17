@@ -2,11 +2,12 @@
 #include <cassert>
 #include <iterator>
 
-#include "Manager.h"
-#include "node_dsl.hpp"
+#include <gsched/Manager.hpp>
 
 #define CATCH_CONFIG_MAIN
 #include <catch/catch.hpp>
+
+using namespace gsched;
 
 TEST_CASE( "Node DSL constructs graph correctly.", "[node-dsl]" ) {
 

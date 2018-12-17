@@ -1,4 +1,6 @@
-#include "Manager.h"
+#include <gsched/Manager.hpp>
+
+namespace gsched{
 
 bool Manager::if_all_parents_fin(int i){
 	// Check if parents of i'th node
@@ -141,3 +143,5 @@ void Manager::execute(int src_node_idx, int max_threads){
 	}
 	
 }
+
+}//namespace ends

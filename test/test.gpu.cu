@@ -1,8 +1,7 @@
 #include <cassert>
 #include <stdio.h>
 
-#include "Manager.h"
-#include "node_dsl.hpp"
+#include <gsched/Manager.hpp>
 #include <thrust/device_vector.h>
 #include <thrust/transform.h>
 #include <thrust/sequence.h>
@@ -13,6 +12,8 @@
 
 #define CATCH_CONFIG_MAIN
 #include <catch/catch.hpp>
+
+using namespace gsched;
 
 int cuda_func()
 {
