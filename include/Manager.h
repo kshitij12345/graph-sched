@@ -8,6 +8,7 @@
 #include <memory>
 #include <map>
 #include <tuple>
+#include <condition_variable>
 
 struct BaseNode{
 	// This is the base struct for Nodes.
@@ -34,8 +35,8 @@ struct Node : BaseNode{
 		this->id = id;
 	}
 
-	void operator()() { 
-		this->func(); 
+	void operator()() {
+		this->func();
 	}
 };
 
@@ -57,10 +58,19 @@ struct Manager {
 	std::set<int> reachable_nodes;
 
 	std::set<int> unmet_deps;
+	
+	// Limit maximum inflight threads
+	int inflight_threads;
+	int max_threads;
 
 	// Mutex to make sure the update of to_run 
 	// and completed_nodes are `atomic`
 	std::mutex update_lock;
+
+	std::condition_variable has_completed;
+	bool exec_complete = false;
+
+	std::vector<std::thread> threads;
 
 	template <typename F>
 	BaseNode& append_node(int id, F func){
@@ -79,10 +89,19 @@ struct Manager {
 	// the mentioned `src` node
 	void explore_reachable_nodes(int src);
 
+	// Check to see if current reachable nodes
+	// have all dependencies satisfied
 	void check_dependencies();
 
-	void execute(int src_node = 0);
+	// Start executing runnable threads
+	void schedule();
 
+	// Execute all reachable threads from
+	// `src_node`.
+	void execute(int src_node = 0, int max_thread = std::thread::hardware_concurrency());
+	
+	// Reset all state variables for a
+	// new execution.
 	void clear_state();
 
 	// Returns the order in which nodes

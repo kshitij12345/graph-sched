@@ -4,7 +4,7 @@ bool Manager::if_all_parents_fin(int i){
 	// Check if parents of i'th node
 	// have executed
 	for(auto parent : this->nodes[i]->parents){
-		if ((completed.find(parent)) == completed.end()){
+		if ((this->completed.find(parent)) == this->completed.end()){
 			// If not present
 			return false;
 		}
@@ -17,15 +17,18 @@ void Manager::update(std::set<int> children,int id){
 	{
 		std::lock_guard<std::mutex> Lock(update_lock);
 		
-		completed_vec.push_back(id);
-		completed.insert(id);
+		// Notify that this thread has completed.
+		this->inflight_threads--;
+
+		this->completed_vec.push_back(id);
+		this->completed.insert(id);
 		
 		// Check to see if any children
 		// is ready to run. i.e. if all
 		// parents of the child have executed.
 		for(auto child : children){
 			if(if_all_parents_fin(child)){
-				to_run.push(child);
+				this->to_run.push(child);
 			}
 					
 		}
@@ -33,6 +36,7 @@ void Manager::update(std::set<int> children,int id){
 	} // Scope of Lock ends (i.e. Mutex is up for grabs)
 }
 
+// Depth-first search to explore reachable nodes.
 void Manager::explore_reachable_nodes(int src){
 	this->reachable_nodes.insert(src);
 	auto& node = *(this->nodes[src]);
@@ -42,6 +46,9 @@ void Manager::explore_reachable_nodes(int src){
 	}
 }
 
+// Check if dependencies of all reachable nodes
+// are satisfied. throws if any node has incomplete
+// dependencies
 void Manager::check_dependencies(){
 	for(auto& node_id : this->reachable_nodes){
 		auto& node = *(this->nodes[node_id]);
@@ -52,25 +59,10 @@ void Manager::check_dependencies(){
 			}
 		}
 	}
-}
 
-void Manager::clear_state(){
-	this->reachable_nodes = {};
-	this->completed = {};
-	this->unmet_deps = {};
-	this->completed_vec = {};
-
-}
-
-void Manager::execute(int src_node_idx){
-	Manager::clear_state();
-	// Get the src node ready to run.
-	to_run.push(src_node_idx);
-
-	explore_reachable_nodes(src_node_idx);
-	check_dependencies();
-
-	if(unmet_deps.size()){
+	// Check if any reachable node
+	// has unmet dependencies.
+	if(this->unmet_deps.size()){
 		std::string error_msg = "";
 		for(auto& node: unmet_deps){
 			error_msg += "Error: Node " + std::to_string(node) + " has unmet dependencies.\n"; 
@@ -79,38 +71,73 @@ void Manager::execute(int src_node_idx){
 		error_msg += "Fix these unmet deps\n";
 		throw(error_msg);
 	}
+}
 
-	// 1 Thread per Node Mode
-	std::vector<std::thread> threads;
-	
-	// Run till all nodes are completed.
-	while(completed.size() < reachable_nodes.size()){
-		{
-			std::lock_guard<std::mutex> Lock(update_lock);
+void Manager::clear_state(){
+	// clear all the state
+	// variables for a 
+	// new execution.
+	reachable_nodes = {};
+	completed = {};
+	unmet_deps = {};
+	completed_vec = {};
+	inflight_threads = 0;
+	threads.resize(0);
+	exec_complete = false;
+}
 
-			// Start all runnable nodes.
-			if (!to_run.empty()){
-				int id = to_run.front();
-				to_run.pop();
+void Manager::schedule(){
+	{
+		std::lock_guard<std::mutex> Lock(update_lock);
 
-				// Make sure update is called
-				// at the end of execution
-				auto update_func = [=] {
-					(*nodes[id])();
-					this->update(nodes[id]->children, id);
-				};
+		// Start all runnable nodes given that
+		// we have task to run and are below
+		// max_threads limit.
+		while(!to_run.empty() && inflight_threads < max_threads){
+			int id = to_run.front();
+			to_run.pop();
 
-				threads.push_back(std::thread(update_func));
-			}
+			inflight_threads++;
 
-		} //Scope of lock ends.
-		
+			// Make sure update is called
+			// at the end of execution
+			auto update_func = [this, id] {
+				(*nodes[id])();
+				update(nodes[id]->children, id);
+				schedule();
+			};
+
+			threads.push_back(std::thread(update_func));
+		}
+
+	} //Scope of lock ends.
+
+	// Notify main thread if all reachable nodes have completed.
+	if (completed.size() == reachable_nodes.size()){
+		this->exec_complete = true;
+		has_completed.notify_one();
 	}
+}
 
+void Manager::execute(int src_node_idx, int max_threads){
+	this->max_threads = max_threads;
+	clear_state();
+
+	explore_reachable_nodes(src_node_idx);
+	check_dependencies();
+
+	// Get the src node ready to run.
+	to_run.push(src_node_idx);
+
+	// Schedule first node
+	Manager::schedule();
+
+	// Wait until all reachable threads have executed.
+	std::unique_lock<std::mutex> lock(update_lock);
+	has_completed.wait(lock, [this]{return this->exec_complete;});
+	
 	for(auto& thread : threads){
 		thread.join();
 	}
-
-	// for next execution
-	//Manager::clear_state();
+	
 }
