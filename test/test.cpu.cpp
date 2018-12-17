@@ -7,6 +7,8 @@
 #define CATCH_CONFIG_MAIN
 #include <catch/catch.hpp>
 
+using namespace gsched;
+
 TEST_CASE( "Node DSL constructs graph correctly.", "[node-dsl]" ) {
 
 	auto dummy_func = [](){};

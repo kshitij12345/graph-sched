@@ -3,6 +3,8 @@
 #include <utility>
 #include <set>
 
+namespace gsched{
+
 struct BaseNode{
 	// This is the base struct for Nodes.
 	// It allows us to have derived nodes
@@ -104,3 +106,5 @@ inline const std::tuple<T2...>& operator>>(const std::tuple<T1...>& lhs, const s
 	for_each_node_dense(lhs, rhs);
 	return rhs;
 }
+
+} // namespace ends

@@ -13,6 +13,8 @@
 #define CATCH_CONFIG_MAIN
 #include <catch/catch.hpp>
 
+using namespace gsched;
+
 int cuda_func()
 {
   // allocate three device_vectors with 10 elements

@@ -11,6 +11,8 @@
 #include <condition_variable>
 #include "Node.hpp"
 
+namespace gsched{
+
 struct Manager {
 	// Map to hold of all the nodes.
 	std::map<int, std::unique_ptr<BaseNode>> nodes;
@@ -86,3 +88,4 @@ struct Manager {
 
 };
 
+}// namespace ends
