@@ -63,10 +63,9 @@ TEST_CASE( "Graph execution order is correct.", "[manager]" ) {
 	auto& node0 = m.append_node(0, fun0);
 	auto& node1 = m.append_node(1, fun1);
 	auto& node2 = m.append_node(2, fun0);
-	auto& node3 = m.append_node(3, fun0);
-
+	
 	node0 >> (node1, node2);
-	m.execute(0);
+	m.execute();
 
 	std::vector<int> expected_order_0 = {0, 2, 1};
 	if (std::thread::hardware_concurrency() == 1){
@@ -75,8 +74,9 @@ TEST_CASE( "Graph execution order is correct.", "[manager]" ) {
 
 	REQUIRE(m.execution_order() == expected_order_0);
 	
+	auto& node3 = m.append_node(3, fun0);
 	(node1, node2) >> node3;
-	m.execute(0);
+	m.execute();
 	
 	std::vector<int> expected_order_1 = {0, 2, 1, 3};
 	if (std::thread::hardware_concurrency() == 1){
@@ -125,11 +125,17 @@ TEST_CASE( "Unmet Dependencies.", "[manager]" ) {
 	auto& node3 = m.append_node(3, func);
 
 	node0 >> (node1, node2) >> node3;
-	
-	REQUIRE_NOTHROW(m.execute(0));
-	REQUIRE_THROWS(m.execute(1));
-	REQUIRE_THROWS(m.execute(2));
-	REQUIRE_THROWS(m.execute(3));
+
+	auto check_deps = [&](int src_node) {
+		m.clear_state();
+		m.explore_reachable_nodes(src_node);
+		m.check_dependencies();
+	};
+
+	REQUIRE_NOTHROW(check_deps(0));
+	REQUIRE_THROWS(check_deps(1));
+	REQUIRE_THROWS(check_deps(2));
+	REQUIRE_THROWS(check_deps(3));
 }
 
 TEST_CASE( "Max Thread.", "[manager]" ) {
@@ -144,16 +150,88 @@ TEST_CASE( "Max Thread.", "[manager]" ) {
 	auto& node3 = m.append_node(3, fun0);
 
 	node0 >> (node1, node2) >> node3;
-	m.execute(0, 1);
+	m.execute(1);
 
 	std::vector<int> expected_order = {0, 1, 2, 3};
 	REQUIRE(m.execution_order() == expected_order);
 
-	m.execute(0);
+	m.execute();
 	std::vector<int> expected_order_mul_thread = {0, 2, 1, 3};
 	if (std::thread::hardware_concurrency() == 1){
 		expected_order_mul_thread = {0, 1, 2, 3};
 	}
 	
 	REQUIRE(m.execution_order() == expected_order_mul_thread);
+}
+
+TEST_CASE( "Multiple Graphs", "[manager]") {
+	auto fun0 = []() {};
+	auto fun1 = []() { std::this_thread::sleep_for(std::chrono::microseconds(5000)); };
+
+	Manager m;
+
+	auto& node0 = m.append_node(0, fun0);
+	auto& node1 = m.append_node(1, fun1);
+	auto& node2 = m.append_node(2, fun0);
+	auto& node3 = m.append_node(3, fun0);
+	auto& node4 = m.append_node(4, fun1);
+	auto& node5 = m.append_node(5, fun0);
+	auto& node6 = m.append_node(6, fun1);
+	auto& node7 = m.append_node(7, fun1);
+	auto& node8 = m.append_node(8, fun0);
+	auto& node9 = m.append_node(9, fun1);
+	auto& node10 = m.append_node(10, fun0);
+
+	node0 >> (node1, node2);
+
+	node3 >> node4;
+
+	// lone ranger
+	node5;
+
+	(node6, node7) >> node8 >> (node9, node10);
+
+	std::set<int> cmpl_nodes = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+
+	SECTION("Default Threads") {
+		m.execute();
+		auto exec_order = m.execution_order();
+		std::set<int> executed_nodes(exec_order.begin(), exec_order.end());
+		REQUIRE(cmpl_nodes == executed_nodes);
+	}
+
+	SECTION("1 Thread"){
+		m.execute(1);
+		auto exec_order = m.execution_order();
+		std::set<int> executed_nodes(exec_order.begin(), exec_order.end());
+		REQUIRE(cmpl_nodes == executed_nodes);
+	}
+
+	SECTION("2 Thread"){
+		m.execute(2);
+		auto exec_order = m.execution_order();
+		std::set<int> executed_nodes(exec_order.begin(), exec_order.end());
+		REQUIRE(cmpl_nodes == executed_nodes);
+	}
+	
+	SECTION("3 Thread"){
+		m.execute(3);
+		auto exec_order = m.execution_order();
+		std::set<int> executed_nodes(exec_order.begin(), exec_order.end());
+		REQUIRE(cmpl_nodes == executed_nodes);
+	}
+
+	SECTION("4 Thread"){
+		m.execute(4);
+		auto exec_order = m.execution_order();
+		std::set<int> executed_nodes(exec_order.begin(), exec_order.end());
+		REQUIRE(cmpl_nodes == executed_nodes);
+	}
+	
+	SECTION("5 Thread"){
+		m.execute(5);
+		auto exec_order = m.execution_order();
+		std::set<int> executed_nodes(exec_order.begin(), exec_order.end());
+		REQUIRE(cmpl_nodes == executed_nodes);
+	}
 }
