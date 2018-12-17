@@ -115,9 +115,9 @@ void Manager::schedule(){
 	} //Scope of lock ends.
 
 	// Notify main thread if all reachable nodes have completed.
-	if (completed.size() == reachable_nodes.size()){
+	if ( to_run.empty() and inflight_threads == 0){
 		this->exec_complete = true;
-		has_completed.notify_one();
+	 	has_completed.notify_one();
 	}
 }
 
