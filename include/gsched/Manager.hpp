@@ -52,7 +52,7 @@ struct Manager {
 	}
 
 	// Method which `atomically` updates the to_run and completed
-	void update(std::set<int> children,int id);
+	void enqueue_children(std::set<int> children,int id);
 
 	// Returns bool representing if all parents
 	// of current indexed node have finished
@@ -69,9 +69,13 @@ struct Manager {
 	// Start executing runnable threads
 	void schedule();
 
+	// Updates to_run with all nodes
+	// with zero parents.
+	void enqueue_root();
+
 	// Execute all reachable threads from
 	// `src_node`.
-	void execute(int src_node = 0, int max_thread = std::thread::hardware_concurrency());
+	void execute(int max_thread = std::thread::hardware_concurrency());
 	
 	// Reset all state variables for a
 	// new execution.
