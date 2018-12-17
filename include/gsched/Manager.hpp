@@ -73,8 +73,7 @@ struct Manager {
 	// with zero parents.
 	void enqueue_root();
 
-	// Execute all reachable threads from
-	// `src_node`.
+	// Execute all graphs
 	void execute(int max_thread = std::thread::hardware_concurrency());
 	
 	// Reset all state variables for a
