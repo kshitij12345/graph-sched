@@ -2,8 +2,7 @@
 #include <cassert>
 #include <iterator>
 
-#include "Manager.h"
-#include "node_dsl.hpp"
+#include "Manager.hpp"
 
 #define CATCH_CONFIG_MAIN
 #include <catch/catch.hpp>

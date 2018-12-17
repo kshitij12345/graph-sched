@@ -9,36 +9,7 @@
 #include <map>
 #include <tuple>
 #include <condition_variable>
-
-struct BaseNode{
-	// This is the base struct for Nodes.
-	// It allows us to have derived nodes
-	// for different function signatures
-	// to exist in a single container.
-	int id;
-	std::set<int> parents;
-	std::set<int> children;
-	
-	virtual ~BaseNode(){}
-	virtual void operator()() = 0;
-};
-
-template <typename F>
-struct Node : BaseNode{
-	// Derived from Base, it holds the actual
-	// function. It can hold function of any
-	// signature.
-	F func;
-
-	template<typename F1>
-	Node(int id, F1&& f): func{std::move(f)} {
-		this->id = id;
-	}
-
-	void operator()() {
-		this->func();
-	}
-};
+#include "Node.hpp"
 
 struct Manager {
 	// Map to hold of all the nodes.

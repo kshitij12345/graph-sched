@@ -1,4 +1,4 @@
-#include "Manager.h"
+#include "Manager.hpp"
 
 bool Manager::if_all_parents_fin(int i){
 	// Check if parents of i'th node
