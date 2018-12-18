@@ -15,7 +15,15 @@ bool Manager::if_all_parents_fin(int i){
 	return true;
 }
 
-void Manager::update(std::set<int> children,int id){
+void Manager::enqueue_root(){
+	for (auto const& node : nodes){
+		if (node.second->parents.size() == 0){
+			to_run.push(node.first);
+		}
+	}
+}
+
+void Manager::enqueue_children(std::set<int> children,int id){
 	{
 		std::lock_guard<std::mutex> Lock(update_lock);
 		
@@ -105,7 +113,7 @@ void Manager::schedule(){
 			// at the end of execution
 			auto update_func = [this, id] {
 				(*nodes[id])();
-				update(nodes[id]->children, id);
+				enqueue_children(nodes[id]->children, id);
 				schedule();
 			};
 
@@ -121,15 +129,12 @@ void Manager::schedule(){
 	}
 }
 
-void Manager::execute(int src_node_idx, int max_threads){
-	this->max_threads = max_threads;
+void Manager::execute(int max_threads){
+	this->max_threads = std::max(max_threads, 1);
 	clear_state();
 
-	explore_reachable_nodes(src_node_idx);
-	check_dependencies();
-
 	// Get the src node ready to run.
-	to_run.push(src_node_idx);
+	enqueue_root();
 
 	// Schedule first node
 	Manager::schedule();

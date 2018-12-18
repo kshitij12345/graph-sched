@@ -9,7 +9,7 @@
 
 using namespace gsched;
 
-TEST_CASE( "Node DSL constructs graph correctly.", "[node-dsl]" ) {
+TEST_CASE( "Node DSL constructs graph correctly.", "[node]" ) {
 
 	auto dummy_func = [](){};
 
@@ -24,34 +24,27 @@ TEST_CASE( "Node DSL constructs graph correctly.", "[node-dsl]" ) {
 	// Use the Node DSL to construct a graph.
 	node0 >> (node1, node2) >> (node3, node4, node5);
 
-	// Expected parent/child relationship of the nodes.
-	std::set<int> expected_node0_parents {};
-	std::set<int> expected_node0_children {1, 2};
-	std::set<int> expected_node1_parents {0};
-	std::set<int> expected_node1_children {3, 4, 5};
-	std::set<int> expected_node2_parents {0};
-	std::set<int> expected_node2_children {3, 4, 5};
-	std::set<int> expected_node3_parents {1, 2};
-	std::set<int> expected_node3_children {};
-	std::set<int> expected_node4_parents {1, 2};
-	std::set<int> expected_node4_children {};
-	std::set<int> expected_node5_parents {1, 2};
-	std::set<int> expected_node5_children {};
+	auto set = [](std::set<int> expected){
+		return expected;
+	};
 
-	REQUIRE(node0.parents == expected_node0_parents);
-	REQUIRE(node1.parents == expected_node1_parents);
-	REQUIRE(node2.parents == expected_node2_parents);
-	REQUIRE(node3.parents == expected_node3_parents);
-	REQUIRE(node4.parents == expected_node4_parents);
-	REQUIRE(node5.parents == expected_node5_parents);
+	SECTION("Parents"){
+		REQUIRE(node0.parents == set({}) );
+		REQUIRE(node1.parents == set({0}) );
+		REQUIRE(node2.parents == set({0}) );
+		REQUIRE(node3.parents == set({1, 2}) );
+		REQUIRE(node4.parents == set({1, 2}) );
+		REQUIRE(node5.parents == set({1, 2}) );
+	}
 
-	REQUIRE(node0.children == expected_node0_children);
-	REQUIRE(node1.children == expected_node1_children);
-	REQUIRE(node2.children == expected_node2_children);
-	REQUIRE(node3.children == expected_node3_children);
-	REQUIRE(node4.children == expected_node4_children);
-	REQUIRE(node5.children == expected_node5_children);
-	
+	SECTION("Children"){
+		REQUIRE(node0.children == set({1, 2}) );
+		REQUIRE(node1.children == set({3, 4, 5}) );
+		REQUIRE(node2.children == set({3, 4, 5}) );
+		REQUIRE(node3.children == set({}) );
+		REQUIRE(node4.children == set({}) );
+		REQUIRE(node5.children == set({}) );
+	}
 }
 
 TEST_CASE( "Graph execution order is correct.", "[manager]" ) {
@@ -63,27 +56,24 @@ TEST_CASE( "Graph execution order is correct.", "[manager]" ) {
 	auto& node0 = m.append_node(0, fun0);
 	auto& node1 = m.append_node(1, fun1);
 	auto& node2 = m.append_node(2, fun0);
-	auto& node3 = m.append_node(3, fun0);
 
-	node0 >> (node1, node2);
-	m.execute(0);
-
-	std::vector<int> expected_order_0 = {0, 2, 1};
-	if (std::thread::hardware_concurrency() == 1){
-		expected_order_0 = {0, 1, 2};
-	}
-
-	REQUIRE(m.execution_order() == expected_order_0);
+	auto assert_order = [&](std::vector<int> expected_order){
+		m.execute(2);
+		REQUIRE(m.execution_order() == expected_order);
+	};
 	
-	(node1, node2) >> node3;
-	m.execute(0);
-	
-	std::vector<int> expected_order_1 = {0, 2, 1, 3};
-	if (std::thread::hardware_concurrency() == 1){
-		expected_order_1 = {0, 1, 2, 3};
+	SECTION("First Graph"){
+		node0 >> (node1, node2);
+		assert_order({0, 2, 1});
 	}
 	
-	REQUIRE(m.execution_order() == expected_order_1);
+	SECTION("Second Graph"){
+		// define node3 before FIRST GRAPH
+		// will lead to multi-graph
+		auto& node3 = m.append_node(3, fun0);
+		node0 >> (node1, node2) >> node3;
+		assert_order({0, 2, 1, 3});
+	}
 }
 
 TEST_CASE( "Reachable nodes.", "[manager]" ) {
@@ -97,21 +87,25 @@ TEST_CASE( "Reachable nodes.", "[manager]" ) {
 	auto& node3 = m.append_node(3, func);
 
 	node0 >> (node1, node2);
-	m.explore_reachable_nodes(0);
-	std::set<int> expected_nodes_from_0 = {0, 1, 2};
-	REQUIRE(m.reachable_nodes == expected_nodes_from_0);
-	m.clear_state();
 
-	m.explore_reachable_nodes(1);
-	std::set<int> expected_nodes_from_1 = {1};
-	REQUIRE(m.reachable_nodes == expected_nodes_from_1);
-	m.clear_state();
+	auto explore_func = [&](int src_node, const std::set<int>& expected_nodes){
+		m.explore_reachable_nodes(src_node);
+		REQUIRE(m.reachable_nodes == expected_nodes);
+		m.clear_state();
+	};
 
-	node2 >> node3;
-	m.explore_reachable_nodes(2);
-	std::set<int> expected_nodes_from_2 = {2, 3};
-	REQUIRE(m.reachable_nodes == expected_nodes_from_2);
-	m.clear_state();	
+	SECTION("Node 0"){
+		explore_func(0, {0, 1, 2});
+	}
+	
+	SECTION("Node 1"){
+		explore_func(1, {1});
+	}
+	
+	SECTION("Node 2"){
+		node2 >> node3;
+		explore_func(2, {2, 3});
+	}
 }
 
 TEST_CASE( "Unmet Dependencies.", "[manager]" ) {
@@ -125,11 +119,20 @@ TEST_CASE( "Unmet Dependencies.", "[manager]" ) {
 	auto& node3 = m.append_node(3, func);
 
 	node0 >> (node1, node2) >> node3;
+
+	auto check_deps = [&](int src_node) {
+		m.clear_state();
+		m.explore_reachable_nodes(src_node);
+		m.check_dependencies();
+	};
+
+	SECTION("No-Throw"){ REQUIRE_NOTHROW(check_deps(0)); }
 	
-	REQUIRE_NOTHROW(m.execute(0));
-	REQUIRE_THROWS(m.execute(1));
-	REQUIRE_THROWS(m.execute(2));
-	REQUIRE_THROWS(m.execute(3));
+	SECTION("Throws"){
+		REQUIRE_THROWS(check_deps(1));
+		REQUIRE_THROWS(check_deps(2));
+		REQUIRE_THROWS(check_deps(3));
+	}
 }
 
 TEST_CASE( "Max Thread.", "[manager]" ) {
@@ -144,16 +147,83 @@ TEST_CASE( "Max Thread.", "[manager]" ) {
 	auto& node3 = m.append_node(3, fun0);
 
 	node0 >> (node1, node2) >> node3;
-	m.execute(0, 1);
 
-	std::vector<int> expected_order = {0, 1, 2, 3};
-	REQUIRE(m.execution_order() == expected_order);
+	auto assert_order = [&](int threads, std::vector<int> expected_order){
+		m.execute(threads);
+		REQUIRE(m.execution_order() == expected_order);
+	};
+	
+	SECTION("Single Thread"){
+		assert_order(1, {0, 1, 2, 3});
+	}
 
-	m.execute(0);
-	std::vector<int> expected_order_mul_thread = {0, 2, 1, 3};
-	if (std::thread::hardware_concurrency() == 1){
-		expected_order_mul_thread = {0, 1, 2, 3};
+	SECTION("Multi-thread"){
+		assert_order(2, {0, 2, 1, 3});
+	}
+}
+
+TEST_CASE( "Multiple Graphs", "[manager]") {
+	auto fun0 = []() {};
+	auto fun1 = []() { std::this_thread::sleep_for(std::chrono::microseconds(5000)); };
+
+	Manager m;
+
+	auto& node0 = m.append_node(0, fun0);
+	auto& node1 = m.append_node(1, fun1);
+	auto& node2 = m.append_node(2, fun0);
+	auto& node3 = m.append_node(3, fun0);
+	auto& node4 = m.append_node(4, fun1);
+	auto& node5 = m.append_node(5, fun0);
+	auto& node6 = m.append_node(6, fun1);
+	auto& node7 = m.append_node(7, fun1);
+	auto& node8 = m.append_node(8, fun0);
+	auto& node9 = m.append_node(9, fun1);
+	auto& node10 = m.append_node(10, fun0);
+
+	// Define multiple graphs
+	node0 >> (node1, node2);
+
+	node3 >> node4;
+
+	// lone ranger
+	node5;
+
+	(node6, node7) >> node8 >> (node9, node10);
+
+	std::set<int> cmpl_nodes = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+
+	auto assert_func = [&](int threads){
+		m.execute(threads);
+		auto exec_order = m.execution_order();
+		std::set<int> executed_nodes(exec_order.begin(), exec_order.end());
+		REQUIRE(cmpl_nodes == executed_nodes);
+	};
+
+	// Each section checks if all the nodes
+	// were executed or not.
+	SECTION("Default Threads"){
+		int threads = std::thread::hardware_concurrency();
+		assert_func(threads);
+	}
+
+	
+	SECTION("1 Thread"){
+		assert_func(1);
+	}
+
+	SECTION("2 Thread"){
+		assert_func(2);
 	}
 	
-	REQUIRE(m.execution_order() == expected_order_mul_thread);
+	SECTION("3 Thread"){
+		assert_func(3);
+	}
+
+	SECTION("4 Thread"){
+		assert_func(4);
+	}
+	
+	SECTION("5 Thread"){
+		assert_func(5);
+	}
 }
