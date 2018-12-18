@@ -5,6 +5,20 @@
 
 namespace gsched{
 
+
+template<std::size_t I = 0, typename... Tp>
+inline typename std::enable_if<I == sizeof...(Tp), void>::type
+populate_tuple(const std::tuple<Tp...> &, std::vector<void*>&)
+{ }
+
+template<std::size_t I = 0, typename... Tp>
+inline typename std::enable_if<I < sizeof...(Tp), void>::type
+populate_tuple(const std::tuple<Tp...>& t, std::vector<void*>& untyped_args)
+{
+	std::get<I>(t) = *reinterpret_cast<std::tuple_element<I,std::tuple<Tp...>>::type*>(untyped_args[I]);
+	populate_tuple<I + 1, Tp...>(t, rhs);
+}
+
 struct BaseNode{
 	// This is the base struct for Nodes.
 	// It allows us to have derived nodes
@@ -13,27 +27,36 @@ struct BaseNode{
 	int id;
 	std::set<int> parents;
 	std::set<int> children;
-	
+	// the value computed by this node.
+	void *retval;
 	virtual ~BaseNode(){}
 	virtual void operator()() = 0;
 };
 
-template <typename F>
-struct Node : BaseNode{
-	// Derived from Base, it holds the actual
-	// function. It can hold function of any
-	// signature.
-	F func;
+template<typename Functor> struct Node ;
 
-	template<typename F1>
-	Node(int id, F1&& f): func{std::move(f)} {
+template<typename R, typename...ArgsT>
+struct Node<R(*)(ArgsT...)> : BaseNode // Specialization for function pointers.
+{
+	R(*f)(ArgsT...);
+	Node(int id, R(*f1)(ArgsT...)) : f{f1}
+	{
 		this->id = id;
 	}
 
 	void operator()() {
-		this->func();
+		using arguments_t = std::tuple<ArgsT...>;
+		arguments_t args;
+		std::vector<void*> untyped_args(this->parents.size());
+		for(int i : this->parents) {
+			untyped_args[i] = this->nodes[i].retval;
+		}
+		populate_tuple(args, untyped_args)
+		apply_tuple(f, args);
 	}
+
 };
+
 
 inline BaseNode& operator>>(BaseNode& lhs, BaseNode& rhs){
 	lhs.children.insert(rhs.id);

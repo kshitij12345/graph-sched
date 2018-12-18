@@ -45,11 +45,18 @@ struct Manager {
 
 	std::vector<std::thread> threads;
 
-	template <typename F>
-	BaseNode& append_node(int id, F func){
-		this->nodes[id] = std::unique_ptr<BaseNode>(new Node<F>(id, func));
+	template <typename F, typename... Args> // F must have operator()(...)
+	BaseNode& append_node(int id, F&& func){
+		this->nodes[id] = std::unique_ptr<BaseNode>(new Node<F, Args...>(id, func));
 		return *(this->nodes[id]);
 	}
+
+	template<typename R, typename... Args>
+	BaseNode& append_node(int id, R(*func)(Args...)) {
+		this->nodes[id] = std::unique_ptr<BaseNode>(new Node<R(Args...)>(id, func));
+		return *(this->nodes[id]);
+	}
+
 
 	// Method which `atomically` updates the to_run and completed
 	void enqueue_children(std::set<int> children,int id);
