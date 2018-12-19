@@ -24,26 +24,31 @@ TEST_CASE( "Node DSL constructs graph correctly.", "[node]" ) {
 	// Use the Node DSL to construct a graph.
 	node0 >> (node1, node2) >> (node3, node4, node5);
 
-	auto set = [](std::set<int> expected){
-		return expected;
+	auto compare = [](vec_BaseNode_ref BaseNode::*ptr ,const BaseNode& node, std::vector<int> expected){
+		std::vector<int> vec;
+		for (const auto& parent : node.*ptr){
+			vec.push_back(parent.get().id);
+		}
+
+		return vec == expected;
 	};
 
 	SECTION("Parents"){
-		REQUIRE(node0.parents == set({}) );
-		REQUIRE(node1.parents == set({0}) );
-		REQUIRE(node2.parents == set({0}) );
-		REQUIRE(node3.parents == set({1, 2}) );
-		REQUIRE(node4.parents == set({1, 2}) );
-		REQUIRE(node5.parents == set({1, 2}) );
+		REQUIRE(compare(&BaseNode::parents_ref, node0, {}));
+		REQUIRE(compare(&BaseNode::parents_ref, node1, {0}));
+		REQUIRE(compare(&BaseNode::parents_ref, node2, {0}));
+		REQUIRE(compare(&BaseNode::parents_ref, node3, {1, 2}));
+		REQUIRE(compare(&BaseNode::parents_ref, node4, {1, 2}));
+		REQUIRE(compare(&BaseNode::parents_ref, node5, {1, 2}));
 	}
 
 	SECTION("Children"){
-		REQUIRE(node0.children == set({1, 2}) );
-		REQUIRE(node1.children == set({3, 4, 5}) );
-		REQUIRE(node2.children == set({3, 4, 5}) );
-		REQUIRE(node3.children == set({}) );
-		REQUIRE(node4.children == set({}) );
-		REQUIRE(node5.children == set({}) );
+		REQUIRE(compare(&BaseNode::children_ref, node0, {1, 2}));
+		REQUIRE(compare(&BaseNode::children_ref, node1, {3, 4, 5}));
+		REQUIRE(compare(&BaseNode::children_ref, node2, {3, 4, 5}));
+		REQUIRE(compare(&BaseNode::children_ref, node3, {}));
+		REQUIRE(compare(&BaseNode::children_ref, node4, {}));
+		REQUIRE(compare(&BaseNode::children_ref, node5, {}));
 	}
 }
 
