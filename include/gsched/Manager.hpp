@@ -21,17 +21,8 @@ struct Manager {
 	std::queue<int> to_run;
 
 	// Contains the id of completed nodes.
-	std::set<int> completed;
+	std::vector<int> completed;
 
-	// To keep track of completion order.
-	std::vector<int> completed_vec;
-
-	// Reachable nodes from current src of
-	// execution
-	std::set<int> reachable_nodes;
-
-	std::set<int> unmet_deps;
-	
 	// Limit maximum inflight threads
 	int inflight_threads;
 	int max_threads;
@@ -52,26 +43,18 @@ struct Manager {
 	}
 
 	// Method which `atomically` updates the to_run and completed
-	void enqueue_children(std::set<int> children,int id);
+	void enqueue_children(vec_BaseNode_ref children,int id);
+
+	// Updates to_run with all nodes
+	// with zero parents.
+	void enqueue_root();
 
 	// Returns bool representing if all parents
 	// of current indexed node have finished
 	bool if_all_parents_fin(int i);
 
-	// Method to explore all reachable nodes from
-	// the mentioned `src` node
-	void explore_reachable_nodes(int src);
-
-	// Check to see if current reachable nodes
-	// have all dependencies satisfied
-	void check_dependencies();
-
 	// Start executing runnable threads
 	void schedule();
-
-	// Updates to_run with all nodes
-	// with zero parents.
-	void enqueue_root();
 
 	// Execute all graphs
 	void execute(int max_thread = std::thread::hardware_concurrency());
@@ -86,7 +69,7 @@ struct Manager {
 	// 		  none of the nodes have
 	// 		  executed
 	std::vector<int> execution_order(){
-		return completed_vec;
+		return completed;
 	}
 
 };
