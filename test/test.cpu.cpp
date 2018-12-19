@@ -30,25 +30,25 @@ TEST_CASE( "Node DSL constructs graph correctly.", "[node]" ) {
 			vec.push_back(parent.get().id);
 		}
 
-		return vec == expected;
+		REQUIRE(vec == expected);
 	};
 
 	SECTION("Parents"){
-		REQUIRE(compare(&BaseNode::parents_ref, node0, {}));
-		REQUIRE(compare(&BaseNode::parents_ref, node1, {0}));
-		REQUIRE(compare(&BaseNode::parents_ref, node2, {0}));
-		REQUIRE(compare(&BaseNode::parents_ref, node3, {1, 2}));
-		REQUIRE(compare(&BaseNode::parents_ref, node4, {1, 2}));
-		REQUIRE(compare(&BaseNode::parents_ref, node5, {1, 2}));
+		compare(&BaseNode::parents_ref, node0, {});
+		compare(&BaseNode::parents_ref, node1, {0});
+		compare(&BaseNode::parents_ref, node2, {0});
+		compare(&BaseNode::parents_ref, node3, {1, 2});
+		compare(&BaseNode::parents_ref, node4, {1, 2});
+		compare(&BaseNode::parents_ref, node5, {1, 2});
 	}
 
 	SECTION("Children"){
-		REQUIRE(compare(&BaseNode::children_ref, node0, {1, 2}));
-		REQUIRE(compare(&BaseNode::children_ref, node1, {3, 4, 5}));
-		REQUIRE(compare(&BaseNode::children_ref, node2, {3, 4, 5}));
-		REQUIRE(compare(&BaseNode::children_ref, node3, {}));
-		REQUIRE(compare(&BaseNode::children_ref, node4, {}));
-		REQUIRE(compare(&BaseNode::children_ref, node5, {}));
+		compare(&BaseNode::children_ref, node0, {1, 2});
+		compare(&BaseNode::children_ref, node1, {3, 4, 5});
+		compare(&BaseNode::children_ref, node2, {3, 4, 5});
+		compare(&BaseNode::children_ref, node3, {});
+		compare(&BaseNode::children_ref, node4, {});
+		compare(&BaseNode::children_ref, node5, {});
 	}
 }
 
