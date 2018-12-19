@@ -46,43 +46,6 @@ void Manager::enqueue_children(std::set<int> children,int id){
 	} // Scope of Lock ends (i.e. Mutex is up for grabs)
 }
 
-// Depth-first search to explore reachable nodes.
-void Manager::explore_reachable_nodes(int src){
-	this->reachable_nodes.insert(src);
-	auto& node = *(this->nodes[src]);
-	// explore children
-	for(auto& child: node.children){
-		Manager::explore_reachable_nodes(child);
-	}
-}
-
-// Check if dependencies of all reachable nodes
-// are satisfied. throws if any node has incomplete
-// dependencies
-void Manager::check_dependencies(){
-	for(auto& node_id : this->reachable_nodes){
-		auto& node = *(this->nodes[node_id]);
-		// check if all parents exist in reachable
-		for (auto& parent: node.parents){
-			if(reachable_nodes.find(parent) == reachable_nodes.end()){
-				this->unmet_deps.insert(node_id);
-			}
-		}
-	}
-
-	// Check if any reachable node
-	// has unmet dependencies.
-	if(this->unmet_deps.size()){
-		std::string error_msg = "";
-		for(auto& node: unmet_deps){
-			error_msg += "Error: Node " + std::to_string(node) + " has unmet dependencies.\n"; 
-		}
-
-		error_msg += "Fix these unmet deps\n";
-		throw(error_msg);
-	}
-}
-
 void Manager::clear_state(){
 	// clear all the state
 	// variables for a 

@@ -54,24 +54,16 @@ struct Manager {
 	// Method which `atomically` updates the to_run and completed
 	void enqueue_children(std::set<int> children,int id);
 
+	// Updates to_run with all nodes
+	// with zero parents.
+	void enqueue_root();
+
 	// Returns bool representing if all parents
 	// of current indexed node have finished
 	bool if_all_parents_fin(int i);
 
-	// Method to explore all reachable nodes from
-	// the mentioned `src` node
-	void explore_reachable_nodes(int src);
-
-	// Check to see if current reachable nodes
-	// have all dependencies satisfied
-	void check_dependencies();
-
 	// Start executing runnable threads
 	void schedule();
-
-	// Updates to_run with all nodes
-	// with zero parents.
-	void enqueue_root();
 
 	// Execute all graphs
 	void execute(int max_thread = std::thread::hardware_concurrency());
