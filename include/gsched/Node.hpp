@@ -2,8 +2,15 @@
 #include <tuple>
 #include <utility>
 #include <set>
+#include <functional>
 
 namespace gsched{
+
+// forward reference to support
+// the below using statement.
+struct BaseNode;
+
+using vec_BaseNode_ref = std::vector<std::reference_wrapper<BaseNode>>;
 
 struct BaseNode{
 	// This is the base struct for Nodes.
@@ -11,8 +18,8 @@ struct BaseNode{
 	// for different function signatures
 	// to exist in a single container.
 	int id;
-	std::set<int> parents;
-	std::set<int> children;
+	vec_BaseNode_ref parents_ref;
+	vec_BaseNode_ref children_ref;
 	
 	virtual ~BaseNode(){}
 	virtual void operator()() = 0;
@@ -36,8 +43,8 @@ struct Node : BaseNode{
 };
 
 inline BaseNode& operator>>(BaseNode& lhs, BaseNode& rhs){
-	lhs.children.insert(rhs.id);
-	rhs.parents.insert(lhs.id);
+	lhs.children_ref.push_back(rhs);
+	rhs.parents_ref.push_back(lhs);
 	return rhs;
 }
 
