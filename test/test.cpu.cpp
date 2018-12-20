@@ -241,3 +241,37 @@ TEST_CASE( "For Loop", "[manager]") {
 		assert_func(5);
 	}
 }
+
+TEST_CASE( "Nested Manager", "[manager]") {
+	auto fun0 = []() {};
+	auto fun1 = []() { std::this_thread::sleep_for(std::chrono::microseconds(5000)); };
+	auto nested_mang = []() {
+		Manager nested_m;
+		auto fun0 = []() {};
+		auto fun1 = []() { std::this_thread::sleep_for(std::chrono::microseconds(5000)); };
+		auto& node0 = nested_m.append_node(0, fun0);
+		auto& node1 = nested_m.append_node(1, fun1);
+		auto& node2 = nested_m.append_node(2, fun1);
+		node0 >> node1, node2;
+		nested_m.execute();
+		auto exec_order = nested_m.execution_order();
+		std::set<int> executed_nodes(exec_order.begin(), exec_order.end());
+		std::set<int> cmpl_nodes = {0, 1, 2};
+		REQUIRE(executed_nodes == cmpl_nodes);
+	};
+
+	Manager m;
+
+	auto& node0 = m.append_node(0, nested_mang);
+	auto& node1 = m.append_node(1, fun1);
+	auto& node2 = m.append_node(2, nested_mang);
+	auto& node3 = m.append_node(3, nested_mang);
+	auto& node4 = m.append_node(4, fun1);
+
+	node0 >> node1 >> (node2, node3) >> node4;
+	m.execute();
+	auto exec_order = m.execution_order();
+	std::set<int> executed_nodes(exec_order.begin(), exec_order.end());
+	std::set<int> cmpl_nodes = {0, 1, 2, 3, 4};
+	REQUIRE(executed_nodes == cmpl_nodes);
+}
