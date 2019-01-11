@@ -59,31 +59,28 @@ void Manager::clear_state(){
 }
 
 void Manager::schedule(){
-	{
-		std::lock_guard<std::mutex> Lock(update_lock);
+	std::lock_guard<std::mutex> Lock(update_lock);
 
-		// Start all runnable nodes given that
-		// we have task to run and are below
-		// max_threads limit.
-		while(!to_run.empty() && inflight_threads < max_threads){
-			int id = to_run.front();
-			to_run.pop();
+	// Start all runnable nodes given that
+	// we have task to run and are below
+	// max_threads limit.
+	while(!to_run.empty() && inflight_threads < max_threads){
+		int id = to_run.front();
+		to_run.pop();
 
-			inflight_threads++;
+		inflight_threads++;
 
-			// Make sure update is called
-			// at the end of execution
-			auto update_func = [this, id] {
-				(*nodes[id])();
-				enqueue_children(nodes[id]->children_ref, id);
-				schedule();
-			};
+		// Make sure update is called
+		// at the end of execution
+		auto update_func = [this, id] {
+			(*nodes[id])();
+			enqueue_children(nodes[id]->children_ref, id);
+			schedule();
+		};
 
-			threads.push_back(std::thread(update_func));
-		}
-
-	} //Scope of lock ends.
-
+		threads.push_back(std::thread(update_func));
+	}
+	
 	// Notify main thread if all reachable nodes have completed.
 	if ( to_run.empty() and inflight_threads == 0){
 		this->exec_complete = true;
