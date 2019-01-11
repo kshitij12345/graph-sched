@@ -15,8 +15,9 @@ add_library(gsched ${LIB_SRCS})
 
 # CPU Example
 file(GLOB SOURCES "test/*.cpp")
+add_compile_options(-fsanitize=thread)
 add_executable(test_cpu ${SOURCES} ${LIB_SRCS})
-target_link_libraries (test_cpu gsched ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries (test_cpu gsched ${CMAKE_THREAD_LIBS_INIT} -fsanitize=thread -share)
 
 if(CUDA_FOUND)
 # GPU Example
