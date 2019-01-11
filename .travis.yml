@@ -2,16 +2,16 @@ sudo: false
 language: cpp
 matrix:
   include:
+    # works on Precise and Trusty
     - os: linux
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - g++-6
+            - g++-7
       env:
-        - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
-     # works on Trusty
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7" # works on Trusty
     - os: linux
       addons:
         apt:
