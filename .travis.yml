@@ -1,10 +1,5 @@
 sudo: false
 language: cpp
-compiler:
-  - gcc
-  - clang
-env:
-  - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 matrix:
   include:
     - os: linux
@@ -16,5 +11,16 @@ matrix:
             - g++-6
       env:
         - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
+     # works on Trusty
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-5.0
+          packages:
+            - clang-5.0
+      env:
+        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+
 script:
   - bash build.sh
