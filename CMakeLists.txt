@@ -19,7 +19,13 @@ file(GLOB SOURCES "test/*.cpp")
 add_compile_options(-fsanitize=thread)
 add_compile_options(-fPIE)
 add_executable(test_cpu ${SOURCES} ${LIB_SRCS})
-target_link_libraries (test_cpu gsched ${CMAKE_THREAD_LIBS_INIT} -fsanitize=thread -pie)
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    target_link_libraries (test_cpu gsched ${CMAKE_THREAD_LIBS_INIT} -fsanitize=thread -pie)
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    target_link_libraries (test_cpu gsched ${CMAKE_THREAD_LIBS_INIT} -fsanitize=thread -pie -fuse-ld=gold)
+endif()
+
+
 
 #if(CUDA_FOUND)
 # GPU Example
