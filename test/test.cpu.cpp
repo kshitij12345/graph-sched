@@ -11,6 +11,8 @@ using namespace gsched;
 
 TEST_CASE( "Node DSL constructs graph correctly.", "[node]" ) {
 
+	std::cout << "Node DSL constructs graph correctly.\n";
+
 	auto dummy_func = [](){};
 
 	Manager m;
@@ -53,6 +55,8 @@ TEST_CASE( "Node DSL constructs graph correctly.", "[node]" ) {
 }
 
 TEST_CASE( "Graph execution order is correct.", "[manager]" ) {
+	std::cout << "Graph execution order is correct.\n";
+
 	auto fun0 = []() {};
 	auto fun1 = []() { std::this_thread::sleep_for(std::chrono::microseconds(5000)); };
 
@@ -82,6 +86,8 @@ TEST_CASE( "Graph execution order is correct.", "[manager]" ) {
 }
 
 TEST_CASE( "Max Thread.", "[manager]" ) {
+	std::cout << "Max Thread.\n";
+
 	auto fun0 = []() {};
 	auto fun1 = []() { std::this_thread::sleep_for(std::chrono::microseconds(5000)); };
 
@@ -109,6 +115,8 @@ TEST_CASE( "Max Thread.", "[manager]" ) {
 }
 
 TEST_CASE( "Multiple Graphs", "[manager]") {
+	std::cout << "Multiple Graphs.\n";
+
 	auto fun0 = []() {};
 	auto fun1 = []() { std::this_thread::sleep_for(std::chrono::microseconds(5000)); };
 
@@ -175,6 +183,8 @@ TEST_CASE( "Multiple Graphs", "[manager]") {
 }
 
 TEST_CASE( "For Loop", "[manager]") {
+	std::cout << "For Loop.\n";
+
 	auto fun0 = []() {};
 	auto fun1 = []() { std::this_thread::sleep_for(std::chrono::microseconds(5000)); };
 
@@ -243,6 +253,8 @@ TEST_CASE( "For Loop", "[manager]") {
 }
 
 TEST_CASE( "Nested Manager", "[manager]") {
+	std::cout << "Nested Manager.\n";
+
 	auto fun0 = []() {};
 	auto fun1 = []() { std::this_thread::sleep_for(std::chrono::microseconds(5000)); };
 	auto nested_mang = []() {
