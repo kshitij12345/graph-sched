@@ -257,7 +257,9 @@ TEST_CASE( "Nested Manager", "[manager]") {
 		auto exec_order = nested_m.execution_order();
 		std::set<int> executed_nodes(exec_order.begin(), exec_order.end());
 		std::set<int> cmpl_nodes = {0, 1, 2};
-		REQUIRE(executed_nodes == cmpl_nodes);
+		// Do not use Catch2 in a multi-threaded context.
+		//REQUIRE(executed_nodes == cmpl_nodes);
+		assert(executed_nodes == cmpl_nodes);
 	};
 
 	Manager m;
